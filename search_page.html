@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Search</title>
+</head>
+<body>
+    
+    <input type="file" id="imageInput" accept="image/*">
+    <button onclick="uploadImage()">Search Image</button>
+
+
+    <div id="results"></div>
+
+    <script>
+         function uploadImage() {
+
+            // clear out the search results html
+            document.getElementById("results").innerHTML = "";
+
+            // Get the file input element
+            var inputElement = document.getElementById('imageInput');
+            // Check if a file is selected
+            if (inputElement.files.length > 0) {
+                // Get the selected file
+                var file = inputElement.files[0];
+                // Create a FormData object
+                var formData = new FormData();
+                // Append the file to the FormData object
+                formData.append('file', file);
+
+                // Replace 'your_api_endpoint' with the actual endpoint of your API
+                var apiEndpoint = 'http://localhost:8000/search_image';
+
+                // Example: Sending image data to the API using fetch
+                fetch(apiEndpoint, {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Handle the API response
+                    console.log("recieved api response: ");
+                    console.log(data);
+                    data.search_result.forEach(e => {
+                        if (e.type == "image") {
+                            let image_tag = "<img src='" + e.image_source + "'>";
+                            document.getElementById("results").innerHTML += image_tag;
+                        }
+                    });
+                    
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            } else {
+                alert("Please select an image file.");
+            }
+        }
+    </script>
+
+</body>
+</html>

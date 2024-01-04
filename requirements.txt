@@ -1,5 +1,4 @@
--f https://download.pytorch.org/whl/torch_stable.html
-torch==1.13.1+cpu
+torch
 open_clip_torch
 numpy
 Pillow
@@ -7,3 +6,5 @@ uvicorn
 fastapi
 gdown
 python-multipart
+requests
+pydantic
