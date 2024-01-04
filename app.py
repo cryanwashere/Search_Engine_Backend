@@ -129,8 +129,8 @@ async def upsert_image_url(image_payload_request: pvs.ImagePayloadRequest):
 
     image_url = image_payload_request.image_url
 
-    if client.hash_map.has_key(image_url):
-        return "image is already indexed"
+    if image_url in client.hash_map:
+        return "already indexed"
 
     # fetch the image 
     image = open_image_from_url(image_url)
@@ -143,9 +143,6 @@ async def upsert_image_url(image_payload_request: pvs.ImagePayloadRequest):
         # inference the model on the image
         with torch.no_grad():
             image_features = model.encode_image(image).squeeze()
-
-            
-
             image_features = np.array(image_features)
 
         # upsert the vector and its payload to the search client

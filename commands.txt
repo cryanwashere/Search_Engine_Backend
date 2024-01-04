@@ -1,0 +1,1 @@
+curl -X POST "http://0.0.0.0:8000/upsert_image_url" -H "Content-Type: application/json" -d '{"image_url": "https://upload.wikimedia.org/wikipedia/commons/3/32/Googleplex_HQ_%28cropped%29.jpg", "page_url": ""}'
