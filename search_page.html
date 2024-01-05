@@ -11,13 +11,15 @@
     <button onclick="uploadImage()">Search Image</button>
 
 
-    <div id="results"></div>
+    <div id="result_images"></div>
+    <div id="naturify_classes"></div>
 
     <script>
          function uploadImage() {
 
             // clear out the search results html
-            document.getElementById("results").innerHTML = "";
+            document.getElementById("result_images").innerHTML = "";
+            document.getElementById("naturify_classes").innerHTML = "";
 
             // Get the file input element
             var inputElement = document.getElementById('imageInput');
@@ -30,8 +32,8 @@
                 // Append the file to the FormData object
                 formData.append('file', file);
 
-                // Replace 'your_api_endpoint' with the actual endpoint of your API
-                var apiEndpoint = 'http://localhost:8000/search_image';
+             
+                var apiEndpoint = 'http://209.97.152.154:8000/search_image';
 
                 // Example: Sending image data to the API using fetch
                 fetch(apiEndpoint, {
@@ -43,11 +45,18 @@
                     // Handle the API response
                     console.log("recieved api response: ");
                     console.log(data);
+
+                    // display each of the images
                     data.search_result.forEach(e => {
                         if (e.type == "image") {
                             let image_tag = "<img src='" + e.image_source + "'>";
-                            document.getElementById("results").innerHTML += image_tag;
+                            document.getElementById("result_images").innerHTML += image_tag;
                         }
+                    });
+
+                    // display the naturify predictions
+                    data.nat_predictions.forEach(e => {
+                        document.getElementById("naturify_classes").innerHTML += e.species.common_name + " " + e.score + " <br>";
                     });
                     
                 })
