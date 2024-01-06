@@ -1,28 +1,25 @@
 import open_clip
-
+import time
 import torch
 import numpy as np
 from PIL import Image
 import io
 import json
-
 from torchvision import transforms
 import torchvision
 from torch import nn
-
 import requests
-
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse, HTMLResponse
-
-
 import python_vector_search as pvs
+
+
+
+# load the vector search client
 client = pvs.VectorSearchClient("index/cli_dict.pkl")
 
-
-
-
-iNat_state_dict = torch.load('/Users/cameronryan/Desktop/projects/Naturify/model_state_dict_finished.pth', map_location=torch.device('cpu'))
+# Load iNaturalist model into memory
+iNat_state_dict = torch.load('/home/Server_2/model_state_dict_finished.pth', map_location=torch.device('cpu'))
 iNat_model = torchvision.models.vit_b_16()
 iNat_model.heads = nn.Sequential(
     nn.Linear(in_features=iNat_model.heads[0].in_features, out_features = 10000)
@@ -33,23 +30,29 @@ iNat_model.eval()
 del iNat_state_dict
 print("loaded Naturify model")
 
-
-
-
+# Load the iNaturalist categories
 with open("categories.json","r") as f:
     iNat_categories = json.load(f)
 
+# transform input into the Naturify model
 iNat_transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
+
+# inference the Naturify model on an image, and return a list of dictionary structures containing predictions for what species the image contains
 def iNat_inference(inp):
-    out =iNat_model(inp)
+    # inference the model (output logits)
+    out = iNat_model(inp)
+
+    # use softmax to convert the logits into probablities
     out = torch.softmax(out, dim=1)
-  
+    
+    # find the top 5 most certain classes
     vals, idxs = torch.topk(out, 5, dim=1)
 
+    # create the list of dictionary structures that contain the predictions
     predictions = list()
     for idx in idxs.squeeze():
         predictions.append({
@@ -59,11 +62,12 @@ def iNat_inference(inp):
     return predictions
 
 
-
+# load the CLIP models
 model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
 tokenizer = open_clip.get_tokenizer('ViT-B-32')
-print("loaded CLIP model and tokenizer")
+print("loaded CLIP models and tokenizer")
 
+# Special keys to determine if anything special should be done to an image being searched
 with torch.no_grad():
     special_keys = ["a plant", "an animal", "fungi", "a mushroom", "an insect", "a bird"]
     special_key_vecs = model.encode_text(tokenizer(special_keys))
@@ -71,11 +75,15 @@ with torch.no_grad():
 
 app = FastAPI()
 
-
+# load an image, given its url
 def open_image_from_url(url):
     try:
+        # special header to inform wikipedia that we are a bot 
+        # if we do not give wikipedia this header, our requests will often get denied, and we have a risk of being blocked
+        headers = {'User-Agent': 'BaleneSearchCrawler/0.0 (http://209.97.152.154:8000/search; cjryanwashere@gmail.com'}
+
         # Send a GET request to the URL and get the image content
-        response = requests.get(url)
+        response = requests.get(url, headers=headers)
         response.raise_for_status()  # Check for errors in the HTTP response
 
         # Open the image using Pillow and BytesIO
@@ -85,59 +93,79 @@ def open_image_from_url(url):
     except Exception as e:
         return None
 
-
+# host the browser search page
 @app.get("/search",response_class=HTMLResponse)
 async def search():
     with open("search_page.html","r") as f:
         return f.read()
 
+
+# search an image 
 @app.post("/search_image")
 async def search_image(file: UploadFile = File(...)):
+    # read the image data from the HTTP request and open it
     image = await file.read()
-    #print("read file")
     pil_image = Image.open(io.BytesIO(image))
 
-    # preprocess the Pillow image
+    # preprocess the Pillow image using the transform from open_clip
     image = preprocess(pil_image).unsqueeze(0)
 
     # inference the model on the image
     with torch.no_grad():
-        image_features = model.encode_image(image).squeeze()
 
+        # encode the image with the CLIP model
+        t_encode_start = time.time()
+        image_features = model.encode_image(image).squeeze()
+        t_encode_end = time.time()
+
+        # compare the image features with each of the special keys
         special_key_scores = image_features @ special_key_vecs.T
+
+        # if we want to print out the scores for each of the key phrases
         #for i, score in enumerate(special_key_scores):
         #    print(f"{special_keys[i]}: {score}")
         
+        # If its score is high enough for one of the special keys, inference the iNaturalist model on the image
         if max(special_key_scores) > 18:
             iNat_results = iNat_inference(iNat_transform(pil_image).unsqueeze(0))
         else:
             iNat_results = []
 
-
+        # convert the features to a NumPy array so that it can be searched
         image_features = np.array(image_features)
     
+    # search the image features with the search client
+    t_search_start = time.time()
     results = client.search(image_features)
+    t_search_end = time.time()
+
+    # convert the search results to a list of JSON strings
     results = [r.payload.json() for r in results]
 
-     
+    print(f"image encoding time: {t_encode_end - t_encode_start}s, search time: {t_search_end - t_search_start}s")
+
     return JSONResponse(content={"search_result": results, "nat_predictions": iNat_results})
 
 
-
+# upsert an image to the index
 @app.post("/upsert_image_url")
 async def upsert_image_url(image_payload_request: pvs.ImagePayloadRequest):
 
+    # get the url for the image being upserted from the request
     image_url = image_payload_request.image_url
 
+    # make sure that it has not already been indexed
+    # note that by usig "image_url in client.hash_map" instead of "image_url in client.hash_map.keys()", we can check whether the image is in index in O(1) time instead of O(n) time.
     if image_url in client.hash_map:
         return "already indexed"
 
-    # fetch the image 
+    # fetch the image with an HTTP request
     image = open_image_from_url(image_url)
 
+    # if the request gives us the image
     if image is not None:
 
-        # preprocess the image for the clip model
+        # preprocess the image for the CLIP model
         image = preprocess(image).unsqueeze(0)
 
         # inference the model on the image
@@ -149,10 +177,11 @@ async def upsert_image_url(image_payload_request: pvs.ImagePayloadRequest):
         payload = pvs.VectorPayload(image_payload_request)    
         client.upsert(image_features, payload)
 
+        # save the search index to disk
         client.save()
         
-        
         return "success"
+
     else:
         return "failure"
     
