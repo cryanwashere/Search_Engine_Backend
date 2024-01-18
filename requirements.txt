@@ -1,4 +1,5 @@
-torch
+-f https://download.pytorch.org/whl/torch_stable.html
+torch==1.13.1+cpu
 open_clip_torch
 numpy
 Pillow
@@ -8,3 +9,4 @@ gdown
 python-multipart
 requests
 pydantic
+tqdm

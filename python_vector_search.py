@@ -4,6 +4,7 @@ import uuid
 import numpy as np
 import pickle
 import os
+from tqdm import tqdm
 
 class ImagePayloadRequest(BaseModel):
     image_url: str
@@ -56,18 +57,21 @@ class VectorSearchClient:
     def create_point_matrix(self):
         # put all of the points from the index into one NumPy matrix. This way, in order to search the database, it can all be done with one matrix-vector product in NumPy, which is much faster than computing every one individually
 
+
+        self.data_points = list(self.hash_map.values())
         
-        point_matrix = np.array()
-        for (link, point_vector) in self.hash_map.items():
-            np.append(point_matrix, point_vector.vec)
+        self.point_matrix = list(map(lambda x: x.vec, self.data_points))
+        self.point_matrix = np.array(self.point_matrix)
         
         print(f"created point matrix for vector search client {self}")
-        self.point_matrix = point_matrix
+    
+
 
 
     def search2(self, query_vector, k=20):
         # NumPy matrix-vector product
         scores = self.point_matrix @ query_vector
+
         # get the indices of the highest values
         sorted_score_indices = np.argsort(scores)[-k:]
 
@@ -75,10 +79,10 @@ class VectorSearchClient:
         for index in sorted_score_indices:
 
             # How do we get the point vector?
-
+            point_vector = self.data_points[index]
             results.append(VectorSearchResult(point_vector.payload, scores[index]))
 
-        # Sort the results just to be safe. 
+        # Sort the results so that they are not in reverse order of score
         results = sorted(results, key = lambda x: x.score, reverse=True)
         return results[:k]
 
@@ -102,7 +106,8 @@ class VectorSearchClient:
         # insert the point into the vector storage
         self.hash_map[payload.image_url] = point_vector
     
-    def search(self, query_vector, k=20):
+    def search(self, query_vector, k=5):
+
         results = list()
         for (id, point_vector) in self.hash_map.items(): 
             score = point_vector.vec @ query_vector

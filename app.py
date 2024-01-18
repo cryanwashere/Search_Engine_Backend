@@ -17,6 +17,10 @@ import python_vector_search as pvs
 
 # load the vector search client
 client = pvs.VectorSearchClient("index/cli_dict.pkl")
+# create a point matrix for the search client
+client.create_point_matrix()
+# keep track of how many images have been upserted since the server was started
+images_upserted = 0
 
 # Load iNaturalist model into memory
 iNat_state_dict = torch.load('/home/Server_2/model_state_dict_finished.pth', map_location=torch.device('cpu'))
@@ -69,7 +73,7 @@ print("loaded CLIP models and tokenizer")
 
 # Special keys to determine if anything special should be done to an image being searched
 with torch.no_grad():
-    special_keys = ["a plant", "an animal", "fungi", "a mushroom", "an insect", "a bird"]
+    special_keys = ["plant", "mushroom", "animal", "insect"]
     special_key_vecs = model.encode_text(tokenizer(special_keys))
 
 
@@ -99,6 +103,16 @@ async def search():
     with open("search_page.html","r") as f:
         return f.read()
 
+@app.get("/privacy_policy",response_class=HTMLResponse)
+async def search():
+    with open("privacy_policy.html","r") as f:
+        return f.read()
+
+@app.get("/support",response_class=HTMLResponse)
+async def search():
+    with open("support_page.html","r") as f:
+        return f.read()
+
 
 # search an image 
 @app.post("/search_image")
@@ -122,27 +136,29 @@ async def search_image(file: UploadFile = File(...)):
         special_key_scores = image_features @ special_key_vecs.T
 
         # if we want to print out the scores for each of the key phrases
-        #for i, score in enumerate(special_key_scores):
-        #    print(f"{special_keys[i]}: {score}")
+        for i, score in enumerate(special_key_scores):
+            print(f"{special_keys[i]}: {score}")
         
         # If its score is high enough for one of the special keys, inference the iNaturalist model on the image
-        if max(special_key_scores) > 18:
-            iNat_results = iNat_inference(iNat_transform(pil_image).unsqueeze(0))
+        t_natinf_start = time.time()
+        if max(special_key_scores) > 20:
+            iNat_results = iNat_inference(iNat_transform(pil_image.convert('RGB')).unsqueeze(0))
         else:
             iNat_results = []
+        t_natinf_end = time.time()
 
         # convert the features to a NumPy array so that it can be searched
         image_features = np.array(image_features)
     
     # search the image features with the search client
     t_search_start = time.time()
-    results = client.search(image_features)
+    results = client.search2(image_features)
     t_search_end = time.time()
 
     # convert the search results to a list of JSON strings
     results = [r.payload.json() for r in results]
 
-    print(f"image encoding time: {t_encode_end - t_encode_start}s, search time: {t_search_end - t_search_start}s")
+    print(f"image encoding time: {t_encode_end - t_encode_start}s, nat inf time: {t_natinf_end - t_natinf_start}s,  search time: {t_search_end - t_search_start}s")
 
     return JSONResponse(content={"search_result": results, "nat_predictions": iNat_results})
 
@@ -156,11 +172,15 @@ async def upsert_image_url(image_payload_request: pvs.ImagePayloadRequest):
 
     # make sure that it has not already been indexed
     # note that by usig "image_url in client.hash_map" instead of "image_url in client.hash_map.keys()", we can check whether the image is in index in O(1) time instead of O(n) time.
+    t_hashcheck_start = time.time()
     if image_url in client.hash_map:
         return "already indexed"
+    t_hashcheck_end = time.time()
 
     # fetch the image with an HTTP request
+    t_imfetch_start = time.time()
     image = open_image_from_url(image_url)
+    t_imfetch_end = time.time()
 
     # if the request gives us the image
     if image is not None:
@@ -170,15 +190,26 @@ async def upsert_image_url(image_payload_request: pvs.ImagePayloadRequest):
 
         # inference the model on the image
         with torch.no_grad():
+            t_encode_start = time.time()
             image_features = model.encode_image(image).squeeze()
             image_features = np.array(image_features)
+            t_encode_end = time.time()
 
         # upsert the vector and its payload to the search client
         payload = pvs.VectorPayload(image_payload_request)    
         client.upsert(image_features, payload)
 
-        # save the search index to disk
-        client.save()
+
+        #print(f"hash check time: {t_hashcheck_end - t_hashcheck_start}, fetch time: {t_imfetch_end-t_imfetch_start}s, encoding time: {t_encode_end - t_encode_start}s")
+
+        # count how many images have been upserted
+        global images_upserted
+        images_upserted = images_upserted + 1
+
+        # Every 100 images, save the index
+        if images_upserted % 100 == 0 :
+            print("Writing index to disk")
+            client.save()
         
         return "success"
 
@@ -187,5 +218,6 @@ async def upsert_image_url(image_payload_request: pvs.ImagePayloadRequest):
     
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=80)
+    print(f"Completed server process. {images_upserted} image features upserted to the index")
 
