@@ -16,12 +16,14 @@ import python_vector_search as pvs
 
 
 # load the vector search client
-client = pvs.VectorSearchClient("index/cli_dict.pkl")
+client = pvs.VectorSearchClient("/home/index/1.client")
 # create a point matrix for the search client
 client.create_point_matrix()
 # keep track of how many images have been upserted since the server was started
 images_upserted = 0
 
+
+'''
 # Load iNaturalist model into memory
 iNat_state_dict = torch.load('/home/Server_2/model_state_dict_finished.pth', map_location=torch.device('cpu'))
 iNat_model = torchvision.models.vit_b_16()
@@ -64,7 +66,7 @@ def iNat_inference(inp):
             "score" : out.squeeze()[idx].item(),
         })
     return predictions
-
+'''
 
 # load the CLIP models
 model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
@@ -98,18 +100,24 @@ def open_image_from_url(url):
         return None
 
 # host the browser search page
+
+@app.get("/",response_class=HTMLResponse)
+async def main_page():
+    with open("search_page.html","r") as f:
+        return f.read()
+        
 @app.get("/search",response_class=HTMLResponse)
 async def search():
     with open("search_page.html","r") as f:
         return f.read()
 
 @app.get("/privacy_policy",response_class=HTMLResponse)
-async def search():
+async def privacy_policy():
     with open("privacy_policy.html","r") as f:
         return f.read()
 
 @app.get("/support",response_class=HTMLResponse)
-async def search():
+async def support_page():
     with open("support_page.html","r") as f:
         return f.read()
 
@@ -132,6 +140,9 @@ async def search_image(file: UploadFile = File(...)):
         image_features = model.encode_image(image).squeeze()
         t_encode_end = time.time()
 
+    
+        t_natinf_start = time.time()
+        '''
         # compare the image features with each of the special keys
         special_key_scores = image_features @ special_key_vecs.T
 
@@ -140,12 +151,13 @@ async def search_image(file: UploadFile = File(...)):
             print(f"{special_keys[i]}: {score}")
         
         # If its score is high enough for one of the special keys, inference the iNaturalist model on the image
-        t_natinf_start = time.time()
         if max(special_key_scores) > 20:
             iNat_results = iNat_inference(iNat_transform(pil_image.convert('RGB')).unsqueeze(0))
         else:
             iNat_results = []
+        '''
         t_natinf_end = time.time()
+        
 
         # convert the features to a NumPy array so that it can be searched
         image_features = np.array(image_features)
@@ -160,12 +172,17 @@ async def search_image(file: UploadFile = File(...)):
 
     print(f"image encoding time: {t_encode_end - t_encode_start}s, nat inf time: {t_natinf_end - t_natinf_start}s,  search time: {t_search_end - t_search_start}s")
 
-    return JSONResponse(content={"search_result": results, "nat_predictions": iNat_results})
+    #return JSONResponse(content={"search_result": results, "nat_predictions": iNat_results})
+    return JSONResponse(content={"search_result": results })
 
 
 # upsert an image to the index
 @app.post("/upsert_image_url")
 async def upsert_image_url(image_payload_request: pvs.ImagePayloadRequest):
+
+    auth_token = image_payload_request.auth_token
+    if auth_token != "rosebud":
+        return "not authorized"
 
     # get the url for the image being upserted from the request
     image_url = image_payload_request.image_url
@@ -202,17 +219,13 @@ async def upsert_image_url(image_payload_request: pvs.ImagePayloadRequest):
 
         #print(f"hash check time: {t_hashcheck_end - t_hashcheck_start}, fetch time: {t_imfetch_end-t_imfetch_start}s, encoding time: {t_encode_end - t_encode_start}s")
 
-        # count how many images have been upserted
-        global images_upserted
-        images_upserted = images_upserted + 1
 
-        # Every 100 images, save the index
-        if images_upserted % 100 == 0 :
-            print("Writing index to disk")
-            client.save()
+
+        # save the client 
+        client.save()      
+        print("client has been saved")  
         
         return "success"
-
     else:
         return "failure"
     

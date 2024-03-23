@@ -9,11 +9,12 @@ from tqdm import tqdm
 class ImagePayloadRequest(BaseModel):
     image_url: str
     page_url: str
+    auth_token: str
 
 class VectorPayload:
-    def __init__(self, payload_request: ImagePayloadRequest):
-        self.image_url = payload_request.image_url
-        self.page_url = payload_request.page_url
+    def __init__(self, image_url, page_url):
+        self.image_url = image_url
+        self.page_url = page_url
     def json(self):
         return {
             "image_source" : self.image_url,
@@ -97,15 +98,6 @@ class VectorSearchClient:
         # get the number of points that the search client contains
         return len(self.hash_map.values())
 
-    def upsert(self, vector, payload: VectorPayload):
-        # upssert an image and a payload into the search index
-
-        # create the point vector
-        point_vector = PointVector(vector, payload)
-
-        # insert the point into the vector storage
-        self.hash_map[payload.image_url] = point_vector
-    
     def search(self, query_vector, k=5):
 
         results = list()
@@ -119,4 +111,14 @@ class VectorSearchClient:
         #print([r.score for r in results])
 
         return results[:k]
-            
+
+    def upsert(self, vector, payload: VectorPayload):
+        # upssert an image and a payload into the search index
+
+        # create the point vector
+        point_vector = PointVector(vector, payload)
+
+        # insert the point into the vector storage
+        self.hash_map[payload.image_url] = point_vector
+
+    
