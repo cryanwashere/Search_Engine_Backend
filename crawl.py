@@ -18,8 +18,11 @@ import crawler.scrape_wiki as scrape_wiki
 import crawler.parse_wiki as parse_wiki
 import python_vector_search as pvs
 
+device = torch.device("cuda")
+
 # load the CLIP models to encode image or text features
 model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
+model.to(device)
 tokenizer = open_clip.get_tokenizer('ViT-B-32')
 print("loaded CLIP models and tokenizer")
 
@@ -64,7 +67,7 @@ class Crawler:
         self.client = pvs.VectorSearchClient(client_path)
         
 
-        self.pool = ThreadPoolExecutor(max_workers=5)
+        self.pool = ThreadPoolExecutor(max_workers=400)
 
         # queue of pages waiting to be crawled
         self.crawl_queue = Queue()
@@ -73,6 +76,8 @@ class Crawler:
         self.images_indexed = 0
         self.urls_crawled_from_session = 0
         self.scrape_processes_completed = 0
+
+        self.last_save_count = 0
 
 
     def upsert_image_url(self, image_url, page_url):
@@ -98,14 +103,17 @@ class Crawler:
         # if the request gives us the image
         if image is not None:
 
+            #print("transferring image to device")
             # preprocess the image for the CLIP model
-            image = preprocess(image).unsqueeze(0)
+            image = preprocess(image).unsqueeze(0).to(device)
 
             # inference the model on the image
             with torch.no_grad():
                 t_encode_start = time.time()
+                #print("encoding image features on device")
                 image_features = model.encode_image(image).squeeze()
-                image_features = np.array(image_features)
+                #print("finished encoding image features")
+                image_features = np.array(image_features.cpu())
                 t_encode_end = time.time()
 
             # upsert the vector and its payload to the search client
@@ -154,12 +162,12 @@ class Crawler:
             image_urls, text_sections = parse_wiki.extract_html(html_content, url)
 
             # for each of the image urls, upsert them to the vector search client
-            print(f"[scrape_process]: {url}, links: {len(links)} image urls: {len(image_urls)}\n")
+            print(f"[scrape_process]: {url}, links: {len(links)} image urls: {len(image_urls)}")
             for image_url in image_urls[:20]:
                 upsert_result = self.upsert_image_url(image_url, url)
                 self.images_indexed +=1
-                print(f"\timage: \033[1m{image_url[60:120]}\033[0m, result: {upsert_result}\n")
-            print(f"total images indexed: {self.images_indexed}")
+                print(f"\timage: \033[1m{image_url[60:120]}\033[0m, result: {upsert_result}")
+            print(f"total images indexed: {self.client.point_count()}")
 
 
         # record that the scrape process has finished
@@ -189,8 +197,10 @@ class Crawler:
                     print(f"[crawler_process] url: \033[1m{target_url[27:80]}\033[0m, queue size: {self.crawl_queue.qsize()}, crawled urls session: {self.urls_crawled_from_session} crawled urls total: {len(self.crawled_urls)} scrape processes: {self.scrape_processes_completed}")
 
                     # save the progress every 100 urls
-                    if len(self.crawled_urls) % 100 == 0:
+                    if len(self.crawled_urls) - self.last_save_count > 100:
+                        print("\nSAVING PROGRESS\n")
                         self.save_progress()
+                        self.last_save_count = len(self.crawled_urls)
 
                     # process the web page in another thread
                     job = self.pool.submit(self.scrape_process, target_url)
@@ -208,7 +218,7 @@ class Crawler:
 
 
 # create the crawler
-crawler = Crawler("/home/index/3.client", "/home/index/3.crawl2")
+crawler = Crawler("/home/ubuntu/index/3.client", "/home/ubuntu/index/3.crawl2")
 
 
 # the  urls to start depth first search from
