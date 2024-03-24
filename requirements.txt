@@ -5,8 +5,9 @@ numpy
 Pillow
 uvicorn
 fastapi
-gdown
 python-multipart
 requests
 pydantic
 tqdm
+beautifulsoup4
+lxml

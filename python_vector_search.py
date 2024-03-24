@@ -88,9 +88,13 @@ class VectorSearchClient:
         return results[:k]
 
     
-    def save(self):
+    def save(self, save_path=None):
+
+        if save_path == None: 
+            save_path = self.client_path
+
         # save the search client
-        with open(self.client_path, 'wb') as f:
+        with open(save_path, 'wb') as f:
             pickle.dump(self.hash_map, f)
             f.close()
 

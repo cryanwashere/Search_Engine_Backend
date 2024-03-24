@@ -1,6 +1,6 @@
 '''
 
-    The purpose of this file is to recursively search through wikipedia pages, and creata a giant text file of links to wikipedia pages.
+    get an html wikipedia page, and find all of the links to other wikipedia pages from the html
 
 '''
 
@@ -23,7 +23,7 @@ def pause_random_time():
 
 
 
-def search_HTML(html_content):
+def extract_wiki_links(html_content):
     
     # initialize parser
     soup = BeautifulSoup(html_content, 'html.parser')

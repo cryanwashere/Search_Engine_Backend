@@ -12,11 +12,12 @@ import requests
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse, HTMLResponse
 import python_vector_search as pvs
+import sys
 
-
+client_path = sys.argv[1]
 
 # load the vector search client
-client = pvs.VectorSearchClient("/home/index/1.client")
+client = pvs.VectorSearchClient(client_path)
 # create a point matrix for the search client
 client.create_point_matrix()
 # keep track of how many images have been upserted since the server was started
