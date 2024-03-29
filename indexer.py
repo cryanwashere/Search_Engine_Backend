@@ -32,6 +32,9 @@ import requests
 from PIL import Image
 import numpy as np
 
+
+
+
 #import multiprocessing
 #from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urljoin, urlparse
@@ -118,11 +121,9 @@ def upsert_image_url( image_url, page_url):
 
         # inference the model on the image
         with torch.no_grad():
-            t_encode_start = time.time()
             image_features = model.encode_image(image).squeeze()
             image_features = np.array(image_features)
-            t_encode_end = time.time()
-
+  
         # upsert the vector and its payload to the search client
         payload = pvs.VectorPayload(image_url, page_url)    
         client.upsert(image_features, payload)
@@ -130,9 +131,42 @@ def upsert_image_url( image_url, page_url):
         return "success"
     return "failure"
 
-client_path = "/home/index/vector_clients/apple.pkl"
 
-queue_path = "/home/index/image_queue/apple.json"
+crawl_dir = "/home/volume/index/image_queue/vogue"
+for file in os.listdir(crawl_dir):
+    
+    print(f"Indexing image queue file: {file}")
+
+    queue_path = os.path.join(crawl_dir, file)
+    client_file = file.split(".")[0] + ".pkl"
+    client_path = os.path.join("/home/volume/index/vector_clients/vogue", client_file)
+
+    # load the vector search client
+    client = pvs.VectorSearchClient(client_path)   
+
+    # load the image queue
+    image_queue = load_json_data(queue_path)
+    print(f"processing queue of {len(image_queue)} images")
+
+    # iterate through the image queue normally
+    for i, image_dict in enumerate(image_queue):
+        upsert_result = upsert_image_url(image_dict['image_url'], image_dict['page_url'])
+        print(f"({i+1}/{len(image_queue)}) image url: {image_dict['image_url'][:100]}, status: {upsert_result} ")
+
+    # save the client's progress
+    client.save()
+    print(f"saved vector client to {client_path}")
+    
+print("completed indexing last queue file. process complete. ")
+
+
+
+
+
+'''
+client_path = "/home/volume/index/vector_clients/nwt_1.pkl"
+
+queue_path = "/home/volume/index/image_queue/nwt_1.json"
 
 # load the vector search client
 client = pvs.VectorSearchClient(client_path)   
@@ -149,4 +183,57 @@ for i, image_dict in enumerate(image_queue):
 # save the client's progress
 client.save()
 print("finished saving vector index. process complete.")
+'''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ignore this for now
+
+class BatchIndexer: 
+    '''
+    
+        meant to speed up the process of inferencing images. This will store a tensor, where images are continuously concatenated together. When the batch has reached a specific dimensionality, it will then generate features for the entire batch
+    
+    '''
+    def __init__(self):
+        
+        self.batch = None
+        self.batch_size = 32
+
+        self.payload_queue = list()
+
+    def up(self, image_tensor, image_payload):
+        
+        print(f"image tensor shape: {image_tensor.shape}")
+        if self.batch is None:
+            self.batch = image_tensor
+        else: 
+            self.batch = torch.cat((self.batch, image_tensor), 0)
+        
+        # one the batch size has been reached, the embedding generation operation is performed
+        if self.batch.shape >= self.batch_size:
+            pass
+
+    def done(self):
+        '''The process is finished, so embed whatever is left of the batch'''
+        pass
 

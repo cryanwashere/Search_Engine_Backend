@@ -13,7 +13,7 @@ import re
 #import uuid
 import os
 from io import BytesIO
-from PIL import Image
+#from PIL import Image
 
 def remove_wiki_references(text) -> str:
     '''

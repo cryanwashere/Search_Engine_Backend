@@ -68,7 +68,7 @@ class VectorSearchClient:
     
 
 
-
+    # More efficient search, which does the similarity computation as a numpy matrix-vector product
     def search2(self, query_vector, k=20):
         # NumPy matrix-vector product
         scores = self.point_matrix @ query_vector

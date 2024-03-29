@@ -1,3 +1,10 @@
+'''
+
+    Given a command line argument for a directory, this searches for any saved search clients (with python '.pkl' extension), and gives information about each of the saved clients.
+
+'''
+
+
 import sys
 import os 
 import pickle

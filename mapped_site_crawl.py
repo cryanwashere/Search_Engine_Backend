@@ -103,6 +103,7 @@ def process_url(url):
 # get all the page urls from the sitemap
 page_urls, sitemap_dict = get_absolute_urls(sitemap_url)
 
+print(f"sitemap dictionary has: {len(sitemap_dict.keys())} sub sitemaps")
 for key in sitemap_dict.keys():
   print(f"crawling sitemap: {key}")
 
@@ -115,7 +116,7 @@ for key in sitemap_dict.keys():
 
   # save the image queue from the current sitemap
   print(f"completed crawling {key} with {len(image_queue)} image urls")
-  with open(os.path.join('/home/index/image_queue/vogue/', sys.argv[2] + '_' + key + '.json'),'w') as f:
+  with open(os.path.join('/home/volume/index/image_queue', sys.argv[2] + '_' + key + '.json'),'w') as f:
     json.dump(image_queue, f)
   
   # empty the image queue so that it can be used again for the next sitemap
@@ -125,7 +126,7 @@ for key in sitemap_dict.keys():
 
 
 
-
+#print(f"there are {len(page_urls)} urls (directly from the sitemap). crawling those.")
 #with concurrent.futures.ThreadPoolExecutor(max_workers=80) as executor:
 #  executor.map(process_url, page_urls)
 

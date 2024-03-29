@@ -1,8 +1,15 @@
+'''
+
+    This script crawls a subset of the wikipedia articles from the wikipedia title list
+
+'''
+
+
 import requests
 import crawler.parse as parse
 import concurrent.futures
 import json
-
+import sys
 
 # open the page list for wikipedia articles
 
@@ -12,8 +19,10 @@ def title_from_line(line):
 
 
 
-crawl_start = 5001
-crawl_end = 10000
+crawl_start = int(sys.argv[1])
+crawl_end = int(sys.argv[2])
+
+in_container = True
 
 pages_to_crawl = crawl_end - crawl_start
 # moniter the amount of pages that have been crawled in the current run 
@@ -21,9 +30,16 @@ pages_crawled = 0
 
 titles = list()
 
+if in_container:
+    titles_path = "/docker-volume/wikipedia/enwiki-titles"
+    save_path = save_path = f"/docker-volume/index/image_queue/wikipedia/wikipedia_{crawl_start}-{crawl_end}.json"
+else:
+    titles_path = "/home/wikipedia/enwiki-titles"
+    save_path = f"/home/volume/index/image_queue/wikipedia/wikipedia_{crawl_start}-{crawl_end}.json"
 
+print("opening titles file")
 # open the title file, and grab a subset of the titles without opening the entire file (there would not be enough RAM to open up the entire file)
-with open("/home/wikipedia/enwiki-titles") as f:
+with open(titles_path) as f:
     for i, line in enumerate(f):
 
         # make sure that we are just grabbing titles from the range of titles to be crawled in the current run 
@@ -91,7 +107,9 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=80) as executor:
   executor.map(process_title, titles)
 
 # the path to save the crawling progress
-save_path = f"/home/index/image_queue/wikipedia/wikipedia_{crawl_start}-{crawl_end}.json"
+#save_path = f"/home/volume/index/image_queue/wikipedia/wikipedia_{crawl_start}-{crawl_end}.json"
+# adjusted for container volume
+#save_path = f"/docker-volume/index/image_queue/wikipedia/wikipedia_{crawl_start}-{crawl_end}.json"
 
 
 print(f"completed crawling with {len(image_queue)} image urls")

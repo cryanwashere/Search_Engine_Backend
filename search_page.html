@@ -84,6 +84,7 @@ h1 {
                     //    }
                     //});
                     createImageGallery(data.search_result)
+                    console.log("created image gallery")
 
                     // display the naturify predictions
                     data.nat_predictions.forEach(e => {
@@ -109,24 +110,18 @@ h1 {
             imageGrid.style.flexWrap = "wrap";
 
             for (const imageUrl of imageUrls) {
+
                 console.log(imageUrl)
                 
-                //const link = document.createElement("a");
-                //link.href = imageUrl.page_source;
-                //link.style.width = "25%";
-                //link.style.height = "25%"
+
    
 
                 const image = document.createElement("img");
                 image.src = imageUrl.image_source;
-                image.style.width = "25%"; /* Adjust width for desired layout */
-                //image.style.height = "auto";
-                
-                //link.appendChild(image);
-                //imageGrid.appendChild(link);
+                image.style.width = "25%"; // Adjust width for desired layout 
                 imageGrid.appendChild(image);
                 
-                //imageButtonHtml = '<a href="${imageUrl.page_source}" target="_blank"><img src="${imageUrl.image_source}" alt="Image description" style="width: 25%;"></a>';
+                
 
                 
 
