@@ -34,6 +34,9 @@ class WikipediaCrawler:
         # information on what the crawler is currently doing for the server
 
         self.status = "idle"
+
+        # the number of pages crawled by the wikipedia crawler 
+        self.pages_crawled = 0
        
 
     def set_target(self, crawl_start, crawl_end):
@@ -58,7 +61,7 @@ class WikipediaCrawler:
 
         print("opening titles file")
         # open the title file, and grab a subset of the titles without opening the entire file (there would not be enough RAM to open up the entire file)
-        with open(titles_path) as f:
+        with open(self.titles_path) as f:
             for i, line in enumerate(f):
 
                 # make sure that we are just grabbing titles from the range of titles to be crawled in the current run 
@@ -106,9 +109,9 @@ class WikipediaCrawler:
 
                     image_queue.append(image_upsert_request)
             
-            global pages_crawled
-            pages_crawled = pages_crawled + 1
-            print(f"({pages_crawled} / {pages_to_crawl}) page: {title}, images: {len(image_urls)}") 
+        
+            self.pages_crawled = self.pages_crawled + 1
+            print(f"({self.pages_crawled} / {self.pages_to_crawl}) page: {title}, images: {len(image_urls)}") 
         else:
             print(f"failed to open page: {url}")
             #with open(f"/home/wikipedia/error_html/error_{title}.html",'w') as f:
@@ -122,13 +125,13 @@ class WikipediaCrawler:
         print(f"crawling subset of wikipedia titles: {self.crawl_start} -> {self.crawl_end}")
 
         # concurrently download each page in the web site
-        with concurrent.futures.ThreadPoolExecutor(max_workers=80) as executor:
-        executor.map(self.process_title, titles)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            executor.map(self.process_title, self.titles)
 
 
         print(f"completed crawling with {len(image_queue)} image urls")
-        with open(save_path,'w') as f:
-            json.dump(image_queue, f)
+        with open(self.save_path,'w') as f:
+            json.dump(self.image_queue, f)
 
         self.status = "idle"
 
