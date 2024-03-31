@@ -55,8 +55,8 @@ class WikipediaCrawler:
        
 
 
-        self.titles_path = "/mnt/droplet/wikipedia/enwiki-titles"
-        self.save_path = f"/mnt/droplet/index/image_queue/wikipedia/wikipedia_{crawl_start}-{crawl_end}.json"
+        self.titles_path = "/home/sshfs_volume/wikipedia/enwiki-titles"
+        self.save_path = f"/home/sshfs_volume/index/image_queue/wikipedia/wikipedia_{crawl_start}-{crawl_end}.json"
       
 
         print("opening titles file")
@@ -129,7 +129,7 @@ class WikipediaCrawler:
             executor.map(self.process_title, self.titles)
 
 
-        print(f"completed crawling with {len(image_queue)} image urls")
+        print(f"completed crawling with {len(self.image_queue)} image urls")
         with open(self.save_path,'w') as f:
             json.dump(self.image_queue, f)
 
