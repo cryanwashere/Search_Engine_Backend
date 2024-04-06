@@ -11,8 +11,10 @@ from torch import nn
 import requests
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 import python_vector_search as pvs
 import sys
+from pydantic import BaseModel
 
 #client_path = sys.argv[1]
 client_path = "/home/volume/index/vector_clients/merged_clients/vogue_1.pkl"
@@ -23,6 +25,8 @@ client = pvs.VectorSearchClient(client_path)
 client.create_point_matrix()
 # keep track of how many images have been upserted since the server was started
 images_upserted = 0
+
+
 
 
 '''
@@ -83,6 +87,10 @@ with torch.no_grad():
 
 app = FastAPI()
 
+#app.mount("static", StaticFiles(directory="static"), name="static")
+
+
+
 # load an image, given its url
 def open_image_from_url(url):
     try:
@@ -113,27 +121,34 @@ async def search():
     with open("search_page.html","r") as f:
         return f.read()
 
-'''
-@app.get("/privacy_policy",response_class=HTMLResponse)
-async def privacy_policy():
-    with open("privacy_policy.html","r") as f:
-        return f.read()
+# search a text query
+class TextSearchRequest(BaseModel):
+    query: str
 
-@app.get("/support",response_class=HTMLResponse)
-async def support_page():
-    with open("support_page.html","r") as f:
-        return f.read()
-'''
+@app.post("/search_text")
+async def search_text(text_search_request: TextSearchRequest):
+    query = text_search_request.query
 
-@app.get("/sitemap.xml")
-def sitemap():
-    with open("static/sitemap.xml",'r') as f:
-        return f.read()
-@app.get("/robots.txt")
-def robots():
-    with open("static/robots.txt",'r') as f:
-        return f.read()
+    with torch.no_grad():
+        t_encode_start = time.time()
+        query_embedding = model.encode_text(tokenizer([query]))
+        t_encode_end = time.time()
 
+        query_embedding = np.array(query_embedding).squeeze()
+    
+     # search the image features with the search client
+    t_search_start = time.time()
+    print(query_embedding.shape)
+    results = client.search2(query_embedding)
+    t_search_end = time.time()
+
+    # convert the search results to a list of JSON strings
+    results = [r.payload.json() for r in results]
+
+    print(f"search query: {query} text encoding time: {t_encode_end - t_encode_start}s,  search time: {t_search_end - t_search_start}s")
+
+    #return JSONResponse(content={"search_result": results, "nat_predictions": iNat_results})
+    return JSONResponse(content={"search_result": results })
 
 # search an image 
 @app.post("/search_image")
@@ -192,6 +207,7 @@ async def search_image(file: UploadFile = File(...)):
 # upsert an image to the index
 @app.post("/upsert_image_url")
 async def upsert_image_url(image_payload_request: pvs.ImagePayloadRequest):
+    return "service currently not available"
 
     auth_token = image_payload_request.auth_token
     if auth_token != "rosebud":

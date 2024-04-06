@@ -30,7 +30,7 @@ h1 {
 
     <div style="position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%);">
         <h1>Balene Image Search Engine</h1>
-        <p>Search Wikipedia with Images</p>
+        <p>Search the Web</p>
     </div>
 
     
@@ -38,6 +38,11 @@ h1 {
     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
         <input type="file" id="imageInput" accept="image/*">
         <button onclick="uploadImage()">Search Image</button>
+
+        <br>
+
+        <input type="text" id="user-input" placeholder="Search Query">
+        <button onclick="searchText()">Search Text</button>
     </div>
 
 
@@ -45,7 +50,54 @@ h1 {
     <div id="naturify_classes"></div>
 
     <script>
-         function uploadImage() {
+
+        function searchText() {
+            // clear out the search results html
+            document.getElementById("result_images").innerHTML = "";
+            document.getElementById("naturify_classes").innerHTML = "";
+
+            var inputText = document.getElementById('user-input').value;
+            console.log(inputText)
+
+            let data = {
+                "query" : inputText
+            }
+
+            const apiEndpoint = '/search_text';
+            fetch(apiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle the API response
+                console.log("recieved api response: ");
+                console.log(data);
+
+                // display each of the images
+                //data.search_result.forEach(e => {
+                //    if (e.type == "image") {
+                //        let image_tag = "<img src='" + e.image_source + "'>";
+                //        document.getElementById("result_images").innerHTML += image_tag;
+                //    }
+                //});
+                createImageGallery(data.search_result)
+                console.log("created image gallery")
+
+                // display the naturify predictions
+                data.nat_predictions.forEach(e => {
+                    document.getElementById("naturify_classes").innerHTML += e.species.common_name + " " + e.score + " <br>";
+                });
+                
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+
+        function uploadImage() {
 
             // clear out the search results html
             document.getElementById("result_images").innerHTML = "";
