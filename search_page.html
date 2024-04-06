@@ -105,6 +105,25 @@ h1 {
             const imageContainer = document.getElementById("result_images");
             imageContainer.innerHTML = ""; // Clear any existing content
 
+            const resultList = document.createElement("ul")
+            for (const payload of imageUrls) {
+                console.log(payload)
+
+                const li = document.createElement("li")
+                const image = document.createElement("img");
+                image.src = payload.image_source;
+                image.style.height = "200px"
+                image.style.width = "auto"
+                li.appendChild(image)
+                const a = document.createElement("a")
+                a.href = payload.page_source
+                a.innerHTML = payload.page_source
+                li.appendChild(a)
+                resultList.appendChild(li)
+                
+            }
+
+            /*
             const imageGrid = document.createElement("div");
             imageGrid.style.display = "flex";
             imageGrid.style.flexWrap = "wrap";
@@ -126,8 +145,12 @@ h1 {
                 
 
             }
+            */
 
-            imageContainer.appendChild(imageGrid);
+
+
+            //imageContainer.appendChild(imageGrid);
+            imageContainer.appendChild(resultList)
         }
 
 

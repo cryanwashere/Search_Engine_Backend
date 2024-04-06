@@ -6,7 +6,7 @@ merged_index = dict()
 
 
 # select a directory containing all the clients that are being merged
-clients_path = '/home/volume/index/vector_clients'
+clients_path = '/home/volume/index/vector_clients/vogue'
 clients = os.listdir(clients_path)
 clients = list(filter(lambda x : x[-3:] == 'pkl', clients))
 print(f"merging clients: {clients}")
@@ -29,7 +29,7 @@ for client_file in clients:
 print(f"completed merging index. merged index contains: {len(merged_index.keys())} points")
 
 # save the index
-save_path = os.path.join(clients_path, "merged_clients/merge_1.pkl")
+save_path = "/home/volume/index/vector_clients/merged_clients/vogue_1.pkl"
 with open(save_path, 'wb') as f:
     pickle.dump(merged_index, f)
     f.close()

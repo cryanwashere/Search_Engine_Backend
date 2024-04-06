@@ -14,7 +14,8 @@ from fastapi.responses import JSONResponse, HTMLResponse
 import python_vector_search as pvs
 import sys
 
-client_path = sys.argv[1]
+#client_path = sys.argv[1]
+client_path = "/home/volume/index/vector_clients/merged_clients/vogue_1.pkl"
 
 # load the vector search client
 client = pvs.VectorSearchClient(client_path)
@@ -112,6 +113,7 @@ async def search():
     with open("search_page.html","r") as f:
         return f.read()
 
+'''
 @app.get("/privacy_policy",response_class=HTMLResponse)
 async def privacy_policy():
     with open("privacy_policy.html","r") as f:
@@ -120,6 +122,16 @@ async def privacy_policy():
 @app.get("/support",response_class=HTMLResponse)
 async def support_page():
     with open("support_page.html","r") as f:
+        return f.read()
+'''
+
+@app.get("/sitemap.xml")
+def sitemap():
+    with open("static/sitemap.xml",'r') as f:
+        return f.read()
+@app.get("/robots.txt")
+def robots():
+    with open("static/robots.txt",'r') as f:
         return f.read()
 
 
