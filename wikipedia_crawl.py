@@ -74,7 +74,7 @@ class WikipediaCrawler:
                 # parse and store the title 
                 title = title_from_line(line)
                 self.titles.append(title)
-        print("wikipedia titles are ready for crawling")
+        print(f"loaded {len(self.titles)} titles for crawling")
 
 
 

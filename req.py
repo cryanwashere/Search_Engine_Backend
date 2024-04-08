@@ -1,12 +1,11 @@
 import requests
 
 # Define the URL of the web server
-url = "http://127.0.0.1:3000/crawl_wikipedia"
+url = "http://127.0.0.1:3000/random_crawl"
 
 # Prepare your JSON data as a dictionary
 data = {
-  "crawl_start" : 15100,
-  "crawl_end" : 20000
+    "seed_url" : "",
 }
 
 
