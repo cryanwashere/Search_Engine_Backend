@@ -132,14 +132,14 @@ def upsert_image_url( image_url, page_url):
     return "failure"
 
 
-crawl_dir = "/home/volume/index/image_queue/vogue"
-for file in os.listdir(crawl_dir):
+crawl_dir = "/home/sshfs_volume/index/image_queue/newyorker"
+for file in os.listdir(crawl_dir)[3:]:
     
     print(f"Indexing image queue file: {file}")
 
     queue_path = os.path.join(crawl_dir, file)
     client_file = file.split(".")[0] + ".pkl"
-    client_path = os.path.join("/home/volume/index/vector_clients/vogue", client_file)
+    client_path = os.path.join("/home/sshfs_volume/index/vector_clients/newyorker", client_file)
 
     # load the vector search client
     client = pvs.VectorSearchClient(client_path)   
