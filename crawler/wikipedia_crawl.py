@@ -6,7 +6,7 @@
 
 
 import requests
-import crawler.parse as parse
+import parse
 import concurrent.futures
 import json
 import sys
