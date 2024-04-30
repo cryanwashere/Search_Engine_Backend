@@ -5,39 +5,36 @@ import numpy as np
 import pickle
 import os
 from tqdm import tqdm
+from dataclasses import dataclass
 
 class ImagePayloadRequest(BaseModel):
     image_url: str
     page_url: str
     auth_token: str
 
+@dataclass
 class VectorPayload:
-    def __init__(self, image_url, page_url):
-        self.image_url = image_url
-        self.page_url = page_url
-    def json(self):
-        return {
-            "image_source" : self.image_url,
-            "page_source" : self.page_url,
-            "type" : "image"
-        }
+    page_id : str
+    image_url : str
+    page_url : str
+    
 
+@dataclass
 class PointVector:
-    def __init__(self, vector, payload: VectorPayload):
-        self.vec = vector
-        self.payload = payload
+    vec : np.array
+    payload : VectorPayload
 
 class VectorSearchResult:
     def __init__(self, payload, score):
         self.payload = payload
         self.score = score
 
-class EmbeddingModelConfig:
-    model_name: str
+#class EmbeddingModelConfig:
+#    model_name: str
 
-class VectorSearchIndex:
-    hash_map: dict
-    model: EmbeddingModelConfig
+#class VectorSearchIndex:
+#    hash_map: dict
+#    model: EmbeddingModelConfig
 
 class VectorSearchClient:
     def __init__(self, client_path):
