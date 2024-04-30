@@ -1,0 +1,22 @@
+{
+    "session_metadata": {
+        "time_started": "1714504814.531967",
+        "images_indexed": false,
+        "pages_indexed": false
+    },
+    "indexed_pages": [
+        {
+            "page_id": "-7971585428805396818",
+            "page_index_data": {
+                "page_url": "url",
+                "text_sections": [
+                    "some text"
+                ],
+                "image_urls": [
+                    "image url"
+                ],
+                "time_indexed": "1714504814.5319824"
+            }
+        }
+    ]
+}

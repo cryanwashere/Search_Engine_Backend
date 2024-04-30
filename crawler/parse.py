@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 import requests
 from urllib.parse import urljoin
 import re
-#import uuid
+import time
 import os
 from io import BytesIO
 #from PIL import Image
@@ -196,12 +196,13 @@ def extract_html(html_content, url) -> dict:
 
     
 
-    page_dict = data_structure.create_page_dict(
+    page_data = index_data_structure.PageIndexData(
         page_url = url,
         text_sections = text_sections, 
         image_urls = image_urls, 
+        time_indexed = str(time.time())
     )
 
-    return page_dict
+    return page_data
                 
                 

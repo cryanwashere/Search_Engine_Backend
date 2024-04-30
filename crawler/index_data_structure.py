@@ -53,35 +53,24 @@ class CrawlSessionMetadata:
     time_started   : str
     images_indexed : bool
     pages_indexed  : bool
-    
+
 
 
 @dataclass
 class CrawlSession: 
 
-    session_metadata : CrawlSessionMetadata
+    metadata : CrawlSessionMetadata
     indexed_pages : List[PageData]
 
     def __init__(self):
-        self.session_metadata = CrawlSessionMetadata(str(time.time()), False, False)
+        self.metadata = CrawlSessionMetadata(str(time.time()), False, False)
         self.indexed_pages = list()
     
     # add data to the crawl session 
-    def upsert(self, 
-        page_url : str,
-        text_sections : List[str],
-        image_urls : List[str],
-        ):
+    def upsert(self, page_index_data : PageIndexData):
         
         self.indexed_pages.append(
-            PageData(
-                PageIndexData(
-                    page_url, 
-                    text_sections, 
-                    image_urls, 
-                    str(time.time())
-                )
-            )
+            PageData( page_index_data )
         )
     
     # convert to a dictionary
@@ -89,20 +78,10 @@ class CrawlSession:
         return dataclasses.asdict(self)
 
     def save(self, save_path):
+        print(f"saving to {save_path}")
         with open(save_path, "w") as f: 
             json.dump(self.dict(), f)
 
 
 
 
-
-# test out the data structures
-if __name__ == "__main__":
-   
-   crawl_session = CrawlSession()
-
-   crawl_session.upsert("url", ["some text"], ["image url"])
-
-
-
-   crawl_session.save("sample_session.json")
