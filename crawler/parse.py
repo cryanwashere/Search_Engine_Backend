@@ -1,19 +1,21 @@
 '''
 
-    The purpose of this file is to contain functions that will be used to parse the web pages, and open the images that should be part of the index.
+    The purpose of this file is to contain functions that will be used to parse the web pages
+
 
 '''
-
-
 
 from bs4 import BeautifulSoup
 import requests
 from urllib.parse import urljoin
 import re
-#import uuid
+import time
 import os
 from io import BytesIO
 #from PIL import Image
+import index_data_structure
+
+
 
 def remove_wiki_references(text) -> str:
     '''
@@ -60,7 +62,7 @@ def filter_image_tag(tag) -> bool:
         return False
     if 'gif' in image_url:
         return False
-    if '.svg' in image_url:
+    if 'svg' in image_url:
         return False
     
     #if "static/images/icons/wikipedia.png" in image_url:
@@ -90,6 +92,7 @@ def extract_wiki_html(html_content, url) -> tuple:
 
         This function will take the html content for a wikipedia page. The function returns a tuple containing a list with links to all the images found desirable for the index, and a list with sections of text that are desirable for the index. 
 
+
     '''
 
 
@@ -140,7 +143,12 @@ def extract_wiki_html(html_content, url) -> tuple:
     return image_urls, text_sections
                 
                 
-def extract_general_html(html_content, url) -> tuple:
+def extract_html(html_content, url) -> dict:
+    '''
+    
+        Takes in the HTML for a web page, and the web page's URL. It will then return a python dictionary containing all of the important data from the web page, to be stored in the page index. 
+    
+    '''
 
     # the list of image urls that the function will return 
     image_urls = list()
@@ -186,6 +194,15 @@ def extract_general_html(html_content, url) -> tuple:
         #print(text)
         text_sections.append(text)
 
-    return image_urls, text_sections
+    
+
+    page_data = index_data_structure.PageIndexData(
+        page_url = url,
+        text_sections = text_sections, 
+        image_urls = image_urls, 
+        time_indexed = str(time.time())
+    )
+
+    return page_data
                 
                 
