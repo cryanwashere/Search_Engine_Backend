@@ -5,55 +5,53 @@ import numpy as np
 import pickle
 import os
 from tqdm import tqdm
+from dataclasses import dataclass
 
 class ImagePayloadRequest(BaseModel):
     image_url: str
     page_url: str
     auth_token: str
 
+@dataclass
 class VectorPayload:
-    def __init__(self, image_url, page_url):
-        self.image_url = image_url
-        self.page_url = page_url
-    def json(self):
-        return {
-            "image_source" : self.image_url,
-            "page_source" : self.page_url,
-            "type" : "image"
-        }
+    page_id : str
+    image_url : str
+    page_url : str
+    
 
+@dataclass
 class PointVector:
-    def __init__(self, vector, payload: VectorPayload):
-        self.vec = vector
-        self.payload = payload
+    vec : np.array
+    payload : VectorPayload
+
+
+@dataclass 
+class VectorIndex:
+    index : dict 
 
 class VectorSearchResult:
     def __init__(self, payload, score):
         self.payload = payload
         self.score = score
 
-class EmbeddingModelConfig:
-    model_name: str
 
-class VectorSearchIndex:
-    hash_map: dict
-    model: EmbeddingModelConfig
 
 class VectorSearchClient:
-    def __init__(self, client_path):
+    def __init__(self, index_path):
 
-        # path to where the index is stored
-        self.client_path = client_path
+        self.index_path = index_path
 
         # load the search client
         # if nothing exists in the client path, it will create a new index. Otherwise it will load the existing index
-        if not os.path.isfile(client_path):
+        if not os.path.isfile(index_path):
             print("could not find existing index file (creating new index)")
-            self.hash_map = dict()
+            self.index = dict()
         else:
-            with open(client_path, "rb") as f:
-                self.hash_map = pickle.load(f)
+            with open(index_path, "rb") as f:
+                self.index = pickle.load(f)
             print(f"opened search client with {self.point_count()} points")
+
+        
     
     def create_point_matrix(self):
         # put all of the points from the index into one NumPy matrix. This way, in order to search the database, it can all be done with one matrix-vector product in NumPy, which is much faster than computing every one individually
@@ -88,13 +86,11 @@ class VectorSearchClient:
         return results[:k]
 
     
-    def save(self, save_path=None):
+    def save(self):
 
-        if save_path == None: 
-            save_path = self.client_path
-
+        
         # save the search client
-        with open(save_path, 'wb') as f:
+        with open(self.index_path, 'wb') as f:
             pickle.dump(self.hash_map, f)
             f.close()
 
@@ -125,4 +121,5 @@ class VectorSearchClient:
         # insert the point into the vector storage
         self.hash_map[payload.image_url] = point_vector
 
-    
+
+if __name__ ==
