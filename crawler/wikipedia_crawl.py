@@ -4,15 +4,16 @@
 
 '''
 
-
 import requests
 import parse
 import concurrent.futures
 import json
 import sys
+import index_data_structure
 
 # open the page list for wikipedia articles
 
+# function for parsing the titles file
 def title_from_line(line):
     return line[1:].replace(" ","").replace("\n","").replace("\t","")
 
@@ -23,23 +24,15 @@ class WikipediaCrawler:
         Crawler instance extists to crawl a certain subset of the wikipedia titles
     
     '''
-    def __init__(self):
+    def __init__(self, crawl_start, crawl_end):
         
-         # a list of all the image upsert requests produced from the current session
-        self.image_queue = list()
-
-        # set of all images that have already been added to the queue
-        self.image_set = set()
-
-        # information on what the crawler is currently doing for the server
-
-        self.status = "idle"
+        self.session_data = data_structure.CrawlSession
 
         # the number of pages crawled by the wikipedia crawler 
         self.pages_crawled = 0
-       
 
-    def set_target(self, crawl_start, crawl_end):
+        self.titles_path = "/home/sshfs_volume/wikipedia/enwiki-titles"
+        self.save_path = f"/home/sshfs_volume/index/image_queue/wikipedia/wikipedia_{crawl_start}-{crawl_end}.json"
 
 
          # the subset of wikipedia titles that are going to be crawled by the current crawler instance
@@ -55,9 +48,7 @@ class WikipediaCrawler:
        
 
 
-        self.titles_path = "/home/sshfs_volume/wikipedia/enwiki-titles"
-        self.save_path = f"/home/sshfs_volume/index/image_queue/wikipedia/wikipedia_{crawl_start}-{crawl_end}.json"
-      
+        
 
         print("opening titles file")
         # open the title file, and grab a subset of the titles without opening the entire file (there would not be enough RAM to open up the entire file)
@@ -79,6 +70,7 @@ class WikipediaCrawler:
 
 
     def process_title(self, title):
+        #print(f"processing title: {title}")
 
         # make our url from the title 
         url = "https://en.wikipedia.org/wiki/" + title
@@ -89,29 +81,21 @@ class WikipediaCrawler:
         # get the html for the web page
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
+            
+
             html_content = response.text  
 
-
-            # this should work generally
-            image_urls, text_sections = parse.extract_general_html(html_content, url)
-
-            # iterate through the image urls
-            for image_url in image_urls:
-                if not image_url in image_set:
-                    image_set.add(image_url)
-
-    
-
-                    image_upsert_request = {
-                    "image_url" : image_url,
-                    "page_url" : url
-                    }
-
-                    image_queue.append(image_upsert_request)
             
+            # this should work generally
+            page_dict = parse.extract_html(html_content, url)
+           
+
+            self.session_data.add(page_dict, url)
+
         
             self.pages_crawled = self.pages_crawled + 1
-            print(f"({self.pages_crawled} / {self.pages_to_crawl}) page: {title}, images: {len(image_urls)}") 
+
+            print(f"({self.pages_crawled} / {self.pages_to_crawl}) page: {title}, text sections: {len(page_dict['text_sections'])}, image urls: {len(page_dict['image_urls'])}") 
         else:
             print(f"failed to open page: {url}")
             #with open(f"/home/wikipedia/error_html/error_{title}.html",'w') as f:
@@ -119,8 +103,6 @@ class WikipediaCrawler:
             #print("wrote response html")
 
     def crawler_process(self):
-
-        self.status = "crawling"
 
         print(f"crawling subset of wikipedia titles: {self.crawl_start} -> {self.crawl_end}")
 
@@ -130,8 +112,16 @@ class WikipediaCrawler:
 
 
         print(f"completed crawling with {len(self.image_queue)} image urls")
-        with open(self.save_path,'w') as f:
-            json.dump(self.image_queue, f)
 
-        self.status = "idle"
+        self.session_data.save(self.save_path)
+        
 
+
+if __name__ == "__main__" :
+    crawl_start = 10000
+    crawl_end   = 15000
+
+    wiki_crawler = WikipediaCrawler()
+    wiki_crawler.set_target(crawl_start, crawl_end)
+
+    wiki_crawler.crawler_process()

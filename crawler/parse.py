@@ -13,7 +13,7 @@ import re
 import os
 from io import BytesIO
 #from PIL import Image
-import data_structure
+import index_data_structure
 
 
 
@@ -193,6 +193,8 @@ def extract_html(html_content, url) -> dict:
         text = remove_wiki_references(text)
         #print(text)
         text_sections.append(text)
+
+    
 
     page_dict = data_structure.create_page_dict(
         page_url = url,
