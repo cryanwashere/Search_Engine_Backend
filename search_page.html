@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta name="google-adsense-account" content="ca-pub-5375512399591036">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Search</title>
@@ -28,9 +29,25 @@ h1 {
 
 <body>
 
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5375512399591036"
+        crossorigin="anonymous"></script>
+    <!-- top of search page -->
+    <ins class="adsbygoogle"
+        style="display:block"
+        data-ad-client="ca-pub-5375512399591036"
+        data-ad-slot="7459304495"
+        data-ad-format="auto"
+        data-full-width-responsive="true"></ins>
+    <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+
+    <!--<a href="/static/about.html">about</a>-->
+
     <div style="position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%);">
         <h1>Balene Image Search Engine</h1>
-        <p>Search Wikipedia with Images</p>
+	<p>This is a new search engine that you can use to search images on the web.<br>  If you upload an image, and then click 'Search Image', the search engine will find relevant images in our index. If you enter a search query, and click 'Search Text', the search engine will find relevant images to your query in our index. </p>
     </div>
 
     
@@ -38,14 +55,66 @@ h1 {
     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
         <input type="file" id="imageInput" accept="image/*">
         <button onclick="uploadImage()">Search Image</button>
+
+        <br>
+
+        <input type="text" id="user-input" placeholder="Search Query">
+        <button onclick="searchText()">Search Text</button>
     </div>
 
 
-    <div id="result_images" style="margin-top: 80vh"></div>
+    <div id="result_images" style="margin-top: 45vh"></div>
     <div id="naturify_classes"></div>
 
     <script>
-         function uploadImage() {
+
+        function searchText() {
+            // clear out the search results html
+            document.getElementById("result_images").innerHTML = "";
+            document.getElementById("naturify_classes").innerHTML = "";
+
+            var inputText = document.getElementById('user-input').value;
+            console.log(inputText)
+
+            let data = {
+                "query" : inputText
+            }
+
+            const apiEndpoint = '/search_text';
+            fetch(apiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle the API response
+                console.log("recieved api response: ");
+                console.log(data);
+
+                // display each of the images
+                //data.search_result.forEach(e => {
+                //    if (e.type == "image") {
+                //        let image_tag = "<img src='" + e.image_source + "'>";
+                //        document.getElementById("result_images").innerHTML += image_tag;
+                //    }
+                //});
+                createImageGallery(data.search_result)
+                console.log("created image gallery")
+
+                // display the naturify predictions
+                data.nat_predictions.forEach(e => {
+                    document.getElementById("naturify_classes").innerHTML += e.species.common_name + " " + e.score + " <br>";
+                });
+                
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+
+        function uploadImage() {
 
             // clear out the search results html
             document.getElementById("result_images").innerHTML = "";
@@ -105,6 +174,25 @@ h1 {
             const imageContainer = document.getElementById("result_images");
             imageContainer.innerHTML = ""; // Clear any existing content
 
+            const resultList = document.createElement("ul")
+            for (const payload of imageUrls) {
+                console.log(payload)
+
+                const li = document.createElement("li")
+                const image = document.createElement("img");
+                image.src = payload.image_source;
+                image.style.height = "200px"
+                image.style.width = "auto"
+                li.appendChild(image)
+                const a = document.createElement("a")
+                a.href = payload.page_source
+                a.innerHTML = payload.page_source
+                li.appendChild(a)
+                resultList.appendChild(li)
+                
+            }
+
+            /*
             const imageGrid = document.createElement("div");
             imageGrid.style.display = "flex";
             imageGrid.style.flexWrap = "wrap";
@@ -126,8 +214,12 @@ h1 {
                 
 
             }
+            */
 
-            imageContainer.appendChild(imageGrid);
+
+
+            //imageContainer.appendChild(imageGrid);
+            imageContainer.appendChild(resultList)
         }
 
 
