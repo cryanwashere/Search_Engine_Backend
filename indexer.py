@@ -132,24 +132,25 @@ def upsert_image_url( image_url, page_url):
     return "failure"
 
 
-crawl_dir = "/home/sshfs_volume/index/image_queue/newyorker"
-for file in os.listdir(crawl_dir)[3:]:
+
+crawl_dir = "/home/sshfs_volume/index/page_index/"
+for file in os.listdir(crawl_dir):
     
     print(f"Indexing image queue file: {file}")
 
     queue_path = os.path.join(crawl_dir, file)
     client_file = file.split(".")[0] + ".pkl"
-    client_path = os.path.join("/home/sshfs_volume/index/vector_clients/newyorker", client_file)
+    client_path = os.path.join("/home/sshfs_volume/index/vector_index/image", client_file)
 
     # load the vector search client
     client = pvs.VectorSearchClient(client_path)   
 
     # load the image queue
-    image_queue = load_json_data(queue_path)
-    print(f"processing queue of {len(image_queue)} images")
+    page_list = load_json_data(queue_path)['indexed_pages']
+    print(f"processing queue of {len(page_list)} pages")
 
     # iterate through the image queue normally
-    for i, image_dict in enumerate(image_queue):
+    for i, image_dict in enumerate(page_list):
         upsert_result = upsert_image_url(image_dict['image_url'], image_dict['page_url'])
         print(f"({i+1}/{len(image_queue)}) image url: {image_dict['image_url'][:100]}, status: {upsert_result} ")
 
@@ -161,12 +162,7 @@ print("completed indexing last queue file. process complete. ")
 
 
 
-
-
 '''
-client_path = "/home/volume/index/vector_clients/nwt_1.pkl"
-
-queue_path = "/home/volume/index/image_queue/nwt_1.json"
 
 # load the vector search client
 client = pvs.VectorSearchClient(client_path)   
@@ -183,18 +179,18 @@ for i, image_dict in enumerate(image_queue):
 # save the client's progress
 client.save()
 print("finished saving vector index. process complete.")
+
+
+
+
+
+
+
+
+
+
+
 '''
-
-
-
-
-
-
-
-
-
-
-
 
 
 
