@@ -9,12 +9,13 @@ from torchvision import transforms
 import torchvision
 from torch import nn
 import requests
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Response
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 import python_vector_search as pvs
 import sys
 from pydantic import BaseModel
+import ssl
 
 #client_path = sys.argv[1]
 client_path = "/home/volume/index/vector_clients/merged_clients/vogue_1.pkl"
@@ -85,9 +86,13 @@ with torch.no_grad():
     special_key_vecs = model.encode_text(tokenizer(special_keys))
 
 
+
+
+#app = FastAPI(ssl_keyfile="private.key", ssl_certfile="cert.crt")
+
 app = FastAPI()
 
-#app.mount("static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 
@@ -120,6 +125,10 @@ async def main_page():
 async def search():
     with open("search_page.html","r") as f:
         return f.read()
+
+@app.get("/ads.txt")
+async def adds():
+    return Response(content="google.com, pub-5375512399591036, DIRECT, f08c47fec0942fa0", media_type="text/plain")
 
 # search a text query
 class TextSearchRequest(BaseModel):
@@ -260,6 +269,6 @@ async def upsert_image_url(image_payload_request: pvs.ImagePayloadRequest):
     
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=80)
+    uvicorn.run(app, host="0.0.0.0", port=443, ssl_keyfile="private.key", ssl_certfile="cert.crt")
     print(f"Completed server process. {images_upserted} image features upserted to the index")
 
