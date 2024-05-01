@@ -11,6 +11,8 @@ import json
 import sys
 import index_data_structure
 
+import uuid
+
 
 class Logger: 
     def __init__(self):

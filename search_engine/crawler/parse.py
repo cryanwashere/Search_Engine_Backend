@@ -13,7 +13,9 @@ import time
 import os
 from io import BytesIO
 #from PIL import Image
-import index_data_structure
+import sys
+sys.path.append('/home/Search_Engine_Backend')
+import search_engine.crawler.index_data_structure as index_data_structure
 
 
 

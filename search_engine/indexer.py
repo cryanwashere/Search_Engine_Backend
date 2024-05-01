@@ -32,6 +32,8 @@ import requests
 from PIL import Image
 import numpy as np
 
+import python_vector_search as pvs
+
 
 
 
@@ -42,12 +44,8 @@ import requests
 
 
 import crawler.parse as parse
-import python_vector_search as pvs
 
-# load the CLIP models to encode image or text features
-model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
-tokenizer = open_clip.get_tokenizer('ViT-B-32')
-print("loaded CLIP models and tokenizer")
+
 
 
 # load an image, given its url
@@ -93,7 +91,7 @@ def load_json_data(filename):
     return None
 
 
-def upsert_image_url( image_url, page_url):
+def upsert_image( payload: pvs.VectorPayload ):
 
     '''
     
@@ -103,15 +101,15 @@ def upsert_image_url( image_url, page_url):
 
     # make sure that it has not already been indexed
     # note that by using "image_url in client.hash_map" instead of "image_url in client.hash_map.keys()", we can check whether the image is in index in O(1) time instead of O(n) time.
-    t_hashcheck_start = time.time()
-    if image_url in client.hash_map:
+
+    if payload.image_url in client.hash_map:
         return "already indexed"
-    t_hashcheck_end = time.time()
+
 
     # fetch the image with an HTTP request
-    t_imfetch_start = time.time()
-    image = open_image_from_url(image_url)
-    t_imfetch_end = time.time()
+
+    image = open_image_from_url(payload.image_url)
+ 
 
     # if the request gives us the image
     if image is not None:
@@ -124,8 +122,7 @@ def upsert_image_url( image_url, page_url):
             image_features = model.encode_image(image).squeeze()
             image_features = np.array(image_features)
   
-        # upsert the vector and its payload to the search client
-        payload = pvs.VectorPayload(image_url, page_url)    
+   
         client.upsert(image_features, payload)
 
         return "success"
@@ -133,12 +130,68 @@ def upsert_image_url( image_url, page_url):
 
 
 
-crawl_dir = "/home/sshfs_volume/index/page_index/"
-for file in os.listdir(crawl_dir):
+if __name__ == "__main__":
+
+    # load the CLIP models to encode image or text features
+    model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
+    tokenizer = open_clip.get_tokenizer('ViT-B-32')
+    print("loaded CLIP models and tokenizer")
+
+    page_index_path = "/home/volume/index/page_index"
+    image_index_path = "/home/volume/index/vector_index/image"
+
+
+    # The script is going to open the page index, and determine if any of the files are missing in the image vector index folder
+    page_index_files = os.listdir(page_index_path)
+    image_vector_files = os.listdir(image_index_path)
+
+    # a list of all the filenames
+    image_index_filenames = [file.split(".")[0] for file in image_vector_files]
+
+
+
+    for file in page_index_files: 
+        filename = file.split(".")[0]
+
+        
+
+        if not filename in image_index_filenames:
+            print(f"Generating image vector index for {filename}")
+
+            client_path = os.path.join(image_index_path, filename + ".pkl")
+            # generate a vector search client representing a single client path
+            client = pvs.VectorSearchClient().file_client(client_path)
+
+            
+
+            page_list = load_json_data(os.path.join(page_index_path, file))['indexed_pages']
+
+            for i, page in enumerate(page_list):
+                
+                print(f"({i+1}/{len(page_list)}) Indexing page with {len(page['page_index_data']['image_urls'])} images: {page['page_index_data']['page_url']}")
+                for image_url in page['page_index_data']['image_urls']:
+
+                    # upsert the image url
+                    upsert_result = upsert_image(pvs.VectorPayload(
+                        page_id = page['page_id'],
+                        page_url = page['page_index_data']['page_url'],
+                        image_url = image_url
+                    ))
+                    print(f"\t image url: {image_url[:50]}, status: {upsert_result} ")
+        
+        print(f"saving to client with {client.point_count} images to {client_path}")
+        client.save()
+
+
+
+
+
+'''
+for filename in filenames_to_index:
     
     print(f"Indexing image queue file: {file}")
 
-    queue_path = os.path.join(crawl_dir, file)
+    page_index_path = os.path.join(crawl_dir, file)
     client_file = file.split(".")[0] + ".pkl"
     client_path = os.path.join("/home/sshfs_volume/index/vector_index/image", client_file)
 
@@ -150,15 +203,33 @@ for file in os.listdir(crawl_dir):
     print(f"processing queue of {len(page_list)} pages")
 
     # iterate through the image queue normally
-    for i, image_dict in enumerate(page_list):
-        upsert_result = upsert_image_url(image_dict['image_url'], image_dict['page_url'])
-        print(f"({i+1}/{len(image_queue)}) image url: {image_dict['image_url'][:100]}, status: {upsert_result} ")
+    for i, page in enumerate(page_list):
+        for image_url in page['page_index_data']['text_sections']:
+            
 
     # save the client's progress
     client.save()
     print(f"saved vector client to {client_path}")
     
 print("completed indexing last queue file. process complete. ")
+'''
+
+
+
+
+
+
+
+
+
+
+
+#IGNORE EVERYTHING BELOW HERE
+
+
+
+
+
 
 
 
@@ -179,16 +250,6 @@ for i, image_dict in enumerate(image_queue):
 # save the client's progress
 client.save()
 print("finished saving vector index. process complete.")
-
-
-
-
-
-
-
-
-
-
 
 '''
 

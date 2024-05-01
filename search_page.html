@@ -180,13 +180,13 @@ h1 {
 
                 const li = document.createElement("li")
                 const image = document.createElement("img");
-                image.src = payload.image_source;
+                image.src = payload.image_url;
                 image.style.height = "200px"
                 image.style.width = "auto"
                 li.appendChild(image)
                 const a = document.createElement("a")
-                a.href = payload.page_source
-                a.innerHTML = payload.page_source
+                a.href = payload.page_url
+                a.innerHTML = payload.page_url
                 li.appendChild(a)
                 resultList.appendChild(li)
                 

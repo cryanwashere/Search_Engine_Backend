@@ -4,19 +4,18 @@ import uuid
 import numpy as np
 import pickle
 import os
+import sys
 from tqdm import tqdm
 from dataclasses import dataclass
-
-class ImagePayloadRequest(BaseModel):
-    image_url: str
-    page_url: str
-    auth_token: str
 
 @dataclass
 class VectorPayload:
     page_id : str
     image_url : str
     page_url : str
+
+    def json(self):
+        return self.__dict__
     
 
 @dataclass
@@ -29,6 +28,7 @@ class PointVector:
 class VectorIndex:
     index : dict 
 
+@dataclass
 class VectorSearchResult:
     def __init__(self, payload, score):
         self.payload = payload
@@ -37,19 +37,70 @@ class VectorSearchResult:
 
 
 class VectorSearchClient:
-    def __init__(self, index_path):
+   
+    def directory_client(self, index_dir):
+        '''
+        
+            The vector search client represents a directory. To be used for deployment
+        
+        '''
+        self.index_dir = index_dir
 
-        self.index_path = index_path
+        # the following code is going to open each of the index files in the given directory, and merge them into one 
+
+
+        self.hash_map = dict()
+
+        clients = os.listdir(index_dir)
+        clients = list(filter(lambda x : x[-3:] == 'pkl', clients))
+        print(f"merging clients: {clients}")
+        
+        for client_file in clients: 
+            client_path = os.path.join(index_dir, client_file)
+
+
+            # this is kind of crazy
+            sys.path.append(r'/home/Search_Engine_Backend/search_engine')            
+            # open the client using python pickle
+            with open(client_path, "rb") as f:
+
+                #print(client_path)
+                client_index = pickle.load(f)
+            
+            print(f"{client_file}: {len(client_index.keys())} points")
+
+            # merge the index from the currently iterated client with the combined index
+            self.hash_map.update(client_index)
+
+            # just in case memory is a problem here
+            del client_index
+        
+
+        print(f"completed merging index. merged index contains: {len(self.hash_map.keys())} points")
+
+        return self
+
+
+    def file_client(self, index_path):
+        ''' 
+
+            The vector search client represents a single file. To be used for indexing 
+
+        '''
+
+        self.index_path = index_path 
 
         # load the search client
         # if nothing exists in the client path, it will create a new index. Otherwise it will load the existing index
         if not os.path.isfile(index_path):
-            print("could not find existing index file (creating new index)")
-            self.index = dict()
+            print(f"could not find existing index file (creating new index at path {self.index_path})")
+            self.hash_map = dict()
         else:
             with open(index_path, "rb") as f:
-                self.index = pickle.load(f)
+                self.hash_map = pickle.load(f)
             print(f"opened search client with {self.point_count()} points")
+        
+        return self
 
         
     
@@ -122,4 +173,14 @@ class VectorSearchClient:
         self.hash_map[payload.image_url] = point_vector
 
 
-if __name__ ==
+# testing
+if __name__ == "__main__": 
+
+    print("running test for python_vector_search.py")
+    #client_path = sys.argv[1]
+    client_path = "/home/volume/index/vector_index/image"
+
+    # load the vector search client
+    client = VectorSearchClient().directory_client(client_path)
+    # create a point matrix for the search client
+    client.create_point_matrix()

@@ -12,16 +12,15 @@ import requests
 from fastapi import FastAPI, File, UploadFile, Response
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
-import python_vector_search as pvs
+import search_engine.python_vector_search as pvs
 import sys
 from pydantic import BaseModel
 import ssl
 
 #client_path = sys.argv[1]
-client_path = "/home/volume/index/vector_clients/merged_clients/vogue_1.pkl"
-
+client_path = "/home/volume/index/vector_index/image"
 # load the vector search client
-client = pvs.VectorSearchClient(client_path)
+client = pvs.VectorSearchClient().directory_client(client_path)
 # create a point matrix for the search client
 client.create_point_matrix()
 # keep track of how many images have been upserted since the server was started
@@ -30,50 +29,7 @@ images_upserted = 0
 
 
 
-'''
-# Load iNaturalist model into memory
-iNat_state_dict = torch.load('/home/Server_2/model_state_dict_finished.pth', map_location=torch.device('cpu'))
-iNat_model = torchvision.models.vit_b_16()
-iNat_model.heads = nn.Sequential(
-    nn.Linear(in_features=iNat_model.heads[0].in_features, out_features = 10000)
-)
-iNat_model.load_state_dict(iNat_state_dict)
-iNat_model.eval()
-# I don't know if this is nescessary
-del iNat_state_dict
-print("loaded Naturify model")
 
-# Load the iNaturalist categories
-with open("categories.json","r") as f:
-    iNat_categories = json.load(f)
-
-# transform input into the Naturify model
-iNat_transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
-
-# inference the Naturify model on an image, and return a list of dictionary structures containing predictions for what species the image contains
-def iNat_inference(inp):
-    # inference the model (output logits)
-    out = iNat_model(inp)
-
-    # use softmax to convert the logits into probablities
-    out = torch.softmax(out, dim=1)
-    
-    # find the top 5 most certain classes
-    vals, idxs = torch.topk(out, 5, dim=1)
-
-    # create the list of dictionary structures that contain the predictions
-    predictions = list()
-    for idx in idxs.squeeze():
-        predictions.append({
-            "species" : iNat_categories[idx],
-            "score" : out.squeeze()[idx].item(),
-        })
-    return predictions
-'''
 
 # load the CLIP models
 model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
@@ -215,7 +171,7 @@ async def search_image(file: UploadFile = File(...)):
 
 # upsert an image to the index
 @app.post("/upsert_image_url")
-async def upsert_image_url(image_payload_request: pvs.ImagePayloadRequest):
+async def upsert_image_url(image_payload_request):
     return "service currently not available"
 
     auth_token = image_payload_request.auth_token
