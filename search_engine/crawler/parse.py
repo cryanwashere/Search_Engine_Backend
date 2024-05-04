@@ -14,7 +14,7 @@ import os
 from io import BytesIO
 #from PIL import Image
 import sys
-sys.path.append('/home/Search_Engine_Backend')
+sys.path.append('/home/sshfs_volume/Search_Engine_Backend')
 import search_engine.crawler.index_data_structure as index_data_structure
 
 

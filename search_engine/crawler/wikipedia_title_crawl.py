@@ -1,6 +1,9 @@
 '''
 
-    This script crawls a subset of the wikipedia articles from the wikipedia title list
+    This script crawls a subset of the wikipedia articles from the wikipedia title list. It requires the following environment variables
+
+        TITLES_FILE
+        VOLUME_PATH
 
 '''
 import os
@@ -20,6 +23,10 @@ class Logger:
     def debug(self, message):
         if self.debug: 
             print(f"[debug] {message}")
+    def error(self, message):
+        print(f"[ERROR] {message}")
+    def log(self, message):
+        print(f"{message}")
     @staticmethod
     def format_number(num):
         num_str = str(num)
@@ -40,21 +47,31 @@ class WikipediaCrawler:
         Crawler instance extists to crawl a certain subset of the wikipedia titles. Crawls all of the titles between 'crawl_start', and 'crawl_end'
     
     '''
-    def __init__(self, crawl_size):
+    def __init__(self, 
+    
+        crawl_start, # relative 
+        crawl_end, # relative
+        titles_path,
+        index_path
+
+    ):
+
+        self.crawl_start = crawl_start
+        self.crawl_end = crawl_end
+        self.titles_path = titles_path
+        self.index_path = index_path
+        
+       
         
         # CREATE THE CRAWL SESSION WHICH WILL STORE THE DATA
         self.crawl_session = index_data_structure.CrawlSession()
 
         # IMPORTANT INFORMATION FOR THE CRAWL
-        self.index_dir = "/home/sshfs_volume/index/page_index/"
-        self.crawl_start = self.determine_next_crawl_start()
-        self.crawl_end = self.crawl_start + crawl_size
-        self.pages_to_crawl = crawl_size
         self.pages_crawled = 0
-        self.titles_path = "/home/sshfs_volume/wikipedia/enwiki-titles"
-        self.save_path = f"/home/sshfs_volume/index/page_index/wikipedia_{self.crawl_start}-{self.crawl_end}.json"
+        self.save_path = os.path.join( index_path, f"wikipedia_{self.crawl_start}-{self.crawl_end}.json" )
 
 
+        print(f"crawling file-relative duration: {crawl_start} -> {crawl_end}")
 
         # GET THE LIST OF TITLES THAT NEED TO BE CRAWLED
         self.titles = list()
@@ -75,27 +92,7 @@ class WikipediaCrawler:
         print(f"loaded {len(self.titles)} titles for crawling")
         
 
-    def determine_next_crawl_start(self):
-        # look through the files in the index, and determine where to resume the crawling process
-
-        index_files = os.listdir(self.index_dir)
-        
-        # filter the files to only contain wikipedia index files
-        index_files = [file for file in index_files if "wikipedia" in file]
-
-        # get the strings detailing what section of the titles are contained in the files from each of the titles
-        crawl_strings = [file.split('_')[-1].split('.')[0] for file in index_files]
-
-        #print(crawl_strings)
-        max_crawl_end = 0
-        for string in crawl_strings:
-            crawl_start, crawl_end = int(string.split('-')[0]), int(string.split('-')[1])
-
-            if crawl_end > max_crawl_end:
-                max_crawl_end = crawl_end
-        
-        return max_crawl_end + 1
-
+    
 
     def process_title(self, title):
         '''
@@ -124,14 +121,18 @@ class WikipediaCrawler:
 
             # PRINT OUT IMPORTANT INFORMATION ABOUT THE PAGE
             self.pages_crawled = self.pages_crawled + 1
-            print(f"({self.pages_crawled} / {self.pages_to_crawl}) text sections: {Logger.format_number(len(page.text_sections))}, image urls: {Logger.format_number(len(page.image_urls))} page: {title}, ") 
+            print(f"({self.pages_crawled + self.crawl_start} / {self.pages_to_crawl + self.crawl_start}) text sections: {Logger.format_number(len(page.text_sections))}, image urls: {Logger.format_number(len(page.image_urls))} page: {title}, ") 
             
 
         else:
             print(f"recieved non 200 status code (code {response.status_code}): {url}")
     
     def linear_crawler_process(self):
-
+        '''
+        
+            Just do the crawl one title at a time. It may be slower, but it is better for testing, because errors are easier to track
+        
+        '''
         print(f"crawling subset of wikipedia titles: {self.crawl_start} -> {self.crawl_end}")
         for title in self.titles:
             self.process_title(title)
@@ -154,10 +155,159 @@ class WikipediaCrawler:
 
 
         self.crawl_session.save(self.save_path)
+
+
+
+def titles_file_duration(titles_file_path: str):
+    '''
+    
+        Given a titles file path (which has the duration of the titles in it), return a tuple representing the titles contained in the titles file. Note that this is for title files which have already been split, not for the main titles file ('enwiki-titles')
+    
+    '''
+
+    # get the name of the file
+    file_name = titles_file_path.split("/")[-1]
+
+    # replace irrelevant parts of the string
+    duration_string = file_name.replace("enwiki-titles","").replace(".txt","")
+    duration_list = duration_string.split("-")
+
+    start, end = int(duration_list[0]), int(duration_list[1])
+
+    return (start, end)
+
+def crawl_durations(index_dir: str):
+    '''
+    
+        The purpose of this method is to look into the page index directory, and gather information about what has already been crawled. 
+    
+    '''
+
+    index_files = os.listdir(index_dir)
+    
+    # filter the files to only contain wikipedia index files
+    index_files = [file for file in index_files if "wikipedia" in file]
+
+    # get the strings detailing what section of the titles are contained in the files from each of the titles
+    crawl_strings = [file.split('_')[-1].split('.')[0] for file in index_files]
+
+    # a list of tuples, representing what durations have been crawled
+    durations = list()
+
+    max_crawl_end = 0
+    for string in crawl_strings:
+        crawl_start, crawl_end = int(string.split('-')[0]), int(string.split('-')[1])
+
+        durations.append((crawl_start, crawl_end))
+
+        if crawl_end > max_crawl_end:
+            max_crawl_end = crawl_end
+    
+    return durations
+    
+    
+
+def find_missing_durations(durations, absolute_start, absolute_end):
+  """
+  Finds all durations between absolute_start and absolute_end that are not in the list.
+
+  Args:
+    durations: A list of tuples representing durations.
+    absolute_start: The starting absolute time.
+    absolute_end: The ending absolute time.
+
+  Returns:
+    A list of tuples representing missing durations.
+  """
+  missing_durations = []
+  current_time = absolute_start
+  durations.sort()
+
+  for start, end in durations:
+    # Check if there's a gap between current_time and the start of the current duration
+    if current_time < start:
+      missing_durations.append((current_time, start))
+    current_time = max(current_time, end)
+
+  # Check if there's a gap between the end of the last duration and absolute_end
+  if current_time < absolute_end:
+    missing_durations.append((current_time, absolute_end))
+
+  return missing_durations
+
+def split_durations(durations, max_duration=500):
+    """
+    Splits durations larger than max_duration into chunks of size max_duration or less.
+
+    Args:
+        durations: A list of tuples representing durations.
+        max_duration: The maximum allowed duration for a single chunk.
+
+    Returns:
+        A list of tuples representing split durations.
+    """
+    split_durations = []
+    for start, end in durations:
+        if end - start > max_duration:
+            current_start = start
+            while current_start < end:
+                next_end = min(current_start + max_duration, end)
+                split_durations.append((current_start, next_end))
+                current_start = next_end
+        else:
+            split_durations.append((start, end))
+
+    split_durations = list(filter(lambda x : x[1] - x[0] > 1 , split_durations))
+    return split_durations
         
+
 
 
 if __name__ == "__main__" :
 
-    wiki_crawler = WikipediaCrawler(500)
-    wiki_crawler.linear_crawler_process()
+    '''
+    
+        The goal of this script is to be able to crawl every title in the given titles file. The wikipedia crawler will be created and run repeatedly, until the process is finished. This way, in the likely event that the process is interupted, it can simply be restarted. Furthermore, the result of the crawl will be broken up into many files 
+    
+    '''
+
+
+    titles_file_env = os.environ["TITLES_FILE"]
+    volume_path_env = os.environ['VOLUME_PATH']
+
+    logger.log(f"using titles file: {titles_file_env}")
+
+    # the directory of the page index
+    page_index_path = os.path.join(volume_path_env, "index/page_index")
+    # the durations that have already been crawled. 
+    indexed_duration_list = crawl_durations(page_index_path)
+
+    
+    # the absolute duration of titles to crawl
+    crawl_duration = titles_file_duration(titles_file_env)
+    absolute_start, absolute_end = crawl_duration
+
+    # the script is meant to crawl every uncrawled section in between absolute_start, and absolute_end
+    durations_to_crawl = split_durations(find_missing_durations(
+        indexed_duration_list,
+        absolute_start, 
+        absolute_end
+    ))
+    
+    print(f"crawling the following title durations: {durations_to_crawl}")
+
+    for duration_start, duration_end in durations_to_crawl:
+        print(f"crawling absolute duration: {duration_start} -> {duration_end}")
+        crawler = WikipediaCrawler(
+            duration_start - absoulte_start,
+            duration_end - absolute_start,
+            titles_file_env,
+            page_index_path 
+        )
+        crawler.linear_crawler_process()
+
+
+   
+        
+
+

@@ -13,6 +13,7 @@ class VectorPayload:
     page_id : str
     image_url : str
     page_url : str
+    text_section_id : str
 
     def json(self):
         return self.__dict__
@@ -60,7 +61,7 @@ class VectorSearchClient:
 
 
             # this is kind of crazy
-            sys.path.append(r'/home/Search_Engine_Backend/search_engine')            
+            sys.path.append(r'/home/volume/Search_Engine_Backend/search_engine')            
             # open the client using python pickle
             with open(client_path, "rb") as f:
 
@@ -170,7 +171,10 @@ class VectorSearchClient:
         point_vector = PointVector(vector, payload)
 
         # insert the point into the vector storage
-        self.hash_map[payload.image_url] = point_vector
+        if payload.image_url != '':
+            self.hash_map[payload.image_url] = point_vector
+        else:
+            self.hash_map[payload.text_section_id] = point_vector
 
 
 # testing
