@@ -28,6 +28,11 @@ images_upserted = 0
 
 
 
+text_client_path = "/home/volume/index/vector_index/text"
+text_client = pvs.VectorSearchClient().directory_client(text_client_path)
+text_client.create_point_matrix()
+
+
 
 
 
@@ -48,7 +53,7 @@ with torch.no_grad():
 
 app = FastAPI()
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="/home/volume/Search_Engine_Backend/static"), name="static")
 
 
 
@@ -71,16 +76,19 @@ def open_image_from_url(url):
         return None
 
 # host the browser search page
+def search_page():
+    with open("/home/volume/Search_Engine_Backend/search_page.html","r") as f:
+        html =  f.read()
+        html = html.replace("<!--INDEX_INFO-->",f"<p>{client.point_count()} images and {text_client.point_count()} text sections have been indexed</p>")
+
+        return html
 
 @app.get("/",response_class=HTMLResponse)
 async def main_page():
-    with open("search_page.html","r") as f:
-        return f.read()
-        
+    return search_page()
 @app.get("/search",response_class=HTMLResponse)
 async def search():
-    with open("search_page.html","r") as f:
-        return f.read()
+    return search_page()
 
 @app.get("/ads.txt")
 async def adds():
@@ -89,6 +97,20 @@ async def adds():
 # search a text query
 class TextSearchRequest(BaseModel):
     query: str
+
+
+def search_embedding(query_embedding):
+    # search the image features with the search client
+
+    text_results = text_client.search2(query_embedding)
+    text_results = [r.payload.json() for r in text_results]
+
+    results = client.search2(query_embedding)
+    # convert the search results to a list of JSON strings
+    results = [r.payload.json() for r in results]
+
+    #return JSONResponse(content={"search_result": results, "nat_predictions": iNat_results})
+    return JSONResponse(content={"search_result": results , "text_search_result" : text_results})
 
 @app.post("/search_text")
 async def search_text(text_search_request: TextSearchRequest):
@@ -101,6 +123,7 @@ async def search_text(text_search_request: TextSearchRequest):
 
         query_embedding = np.array(query_embedding).squeeze()
     
+    '''
      # search the image features with the search client
     t_search_start = time.time()
     print(query_embedding.shape)
@@ -114,6 +137,9 @@ async def search_text(text_search_request: TextSearchRequest):
 
     #return JSONResponse(content={"search_result": results, "nat_predictions": iNat_results})
     return JSONResponse(content={"search_result": results })
+    '''
+
+    return search_embedding(query_embedding)
 
 # search an image 
 @app.post("/search_image")
@@ -166,7 +192,7 @@ async def search_image(file: UploadFile = File(...)):
     print(f"image encoding time: {t_encode_end - t_encode_start}s, nat inf time: {t_natinf_end - t_natinf_start}s,  search time: {t_search_end - t_search_start}s")
 
     #return JSONResponse(content={"search_result": results, "nat_predictions": iNat_results})
-    return JSONResponse(content={"search_result": results })
+    return JSONResponse(content={"search_result": results, "text_search_result" : [] })
 
 
 # upsert an image to the index
@@ -225,6 +251,6 @@ async def upsert_image_url(image_payload_request):
     
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=443, ssl_keyfile="private.key", ssl_certfile="cert.crt")
+    uvicorn.run(app, host="0.0.0.0", port=443, ssl_keyfile="/home/private.key", ssl_certfile="/home/cert.crt")
     print(f"Completed server process. {images_upserted} image features upserted to the index")
 
