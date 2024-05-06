@@ -122,22 +122,6 @@ async def search_text(text_search_request: TextSearchRequest):
         t_encode_end = time.time()
 
         query_embedding = np.array(query_embedding).squeeze()
-    
-    '''
-     # search the image features with the search client
-    t_search_start = time.time()
-    print(query_embedding.shape)
-    results = client.search2(query_embedding)
-    t_search_end = time.time()
-
-    # convert the search results to a list of JSON strings
-    results = [r.payload.json() for r in results]
-
-    print(f"search query: {query} text encoding time: {t_encode_end - t_encode_start}s,  search time: {t_search_end - t_search_start}s")
-
-    #return JSONResponse(content={"search_result": results, "nat_predictions": iNat_results})
-    return JSONResponse(content={"search_result": results })
-    '''
 
     return search_embedding(query_embedding)
 

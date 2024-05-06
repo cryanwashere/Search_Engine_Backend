@@ -46,8 +46,9 @@ h1 {
     <!--<a href="/static/about.html">about</a>-->
 
     <div style="position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%);">
-        <h1>Balene Image Search Engine</h1>
-	<p>This is a new search engine that you can use to search images on the web.<br>  If you upload an image, and then click 'Search Image', the search engine will find relevant images in our index. If you enter a search query, and click 'Search Text', the search engine will find relevant images to your query in our index. </p>
+        <h1>Balene Search Engine</h1>
+	<p> Search Wikipedia </p> <br>
+    <!--INDEX_INFO-->
     </div>
 
     
@@ -63,14 +64,14 @@ h1 {
     </div>
 
 
-    <div id="result_images" style="margin-top: 45vh"></div>
+    <div id="results" style="margin-top: 45vh"></div>
     <div id="naturify_classes"></div>
 
     <script>
 
         function searchText() {
             // clear out the search results html
-            document.getElementById("result_images").innerHTML = "";
+            document.getElementById("results").innerHTML = "";
             document.getElementById("naturify_classes").innerHTML = "";
 
             var inputText = document.getElementById('user-input').value;
@@ -99,6 +100,16 @@ h1 {
                 //        document.getElementById("result_images").innerHTML += image_tag;
                 //    }
                 //});
+                document.getElementById("results").innerHTML += "<h3>Page Results</h3><br>"
+
+                for (const payload of data.text_search_result) {
+                    const a = document.createElement("a")
+                    a.href = payload.page_url
+                    a.innerHTML = payload.page_url
+                    document.getElementById("results").innerHTML += a.outerHTML + "<br>"
+                }
+
+                document.getElementById("results").innerHTML += "<h3>Images</h3><br>"
                 createImageGallery(data.search_result)
                 console.log("created image gallery")
 
@@ -117,7 +128,7 @@ h1 {
         function uploadImage() {
 
             // clear out the search results html
-            document.getElementById("result_images").innerHTML = "";
+            document.getElementById("results").innerHTML = "";
             document.getElementById("naturify_classes").innerHTML = "";
 
             // Get the file input element
@@ -171,8 +182,8 @@ h1 {
 
 
         function createImageGallery(imageUrls) {
-            const imageContainer = document.getElementById("result_images");
-            imageContainer.innerHTML = ""; // Clear any existing content
+            const imageContainer = document.getElementById("results");
+            //imageContainer.innerHTML = ""; // Clear any existing content
 
             const resultList = document.createElement("ul")
             for (const payload of imageUrls) {

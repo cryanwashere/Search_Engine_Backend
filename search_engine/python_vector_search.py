@@ -10,11 +10,11 @@ from dataclasses import dataclass
 
 @dataclass
 class VectorPayload:
-    page_id : str
+
     image_url : str
     page_url : str
-    text_section_id : str
-
+    _id : str
+    
     def json(self):
         return self.__dict__
     
@@ -37,7 +37,7 @@ class VectorSearchResult:
 
 
 
-class VectorSearchClient:
+class VectorSearchClient:    
    
     def directory_client(self, index_dir):
         '''
@@ -170,21 +170,15 @@ class VectorSearchClient:
         # create the point vector
         point_vector = PointVector(vector, payload)
 
-        # insert the point into the vector storage
-        if payload.image_url != '':
-            self.hash_map[payload.image_url] = point_vector
-        else:
-            self.hash_map[payload.text_section_id] = point_vector
+        self.hash_map[payload._id] = point_vector
+
+
+class VectorSearchClient2:
+    def __init__(self, client_path):
+        pass
 
 
 # testing
 if __name__ == "__main__": 
 
-    print("running test for python_vector_search.py")
-    #client_path = sys.argv[1]
-    client_path = "/home/volume/index/vector_index/image"
-
-    # load the vector search client
-    client = VectorSearchClient().directory_client(client_path)
-    # create a point matrix for the search client
-    client.create_point_matrix()
+    pass

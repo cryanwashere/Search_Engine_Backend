@@ -3,7 +3,7 @@ import time
 from dataclasses import dataclass
 import dataclasses
 from typing import List
-
+import uuid
 
     
 '''
@@ -39,7 +39,9 @@ class PageData:
     def __init__(self, page_index_data):
 
         # the id for a an indexed page will always be the hash of its url, and the time that it was indexed, concatenated
-        self.page_id = str(hash(page_index_data.page_url + page_index_data.time_indexed))
+        #self.page_id = str(hash(page_index_data.page_url + page_index_data.time_indexed))
+
+        self.page_id = str(uuid.uuid1())
 
         self.page_index_data = page_index_data
     
@@ -47,6 +49,11 @@ class PageData:
     def dict(self):
         return dataclasses.asdict(self)
 
+
+
+
+        
+'''
 @dataclass 
 class CrawlSessionMetadata:
 
@@ -85,3 +92,4 @@ class CrawlSession:
 
 
 
+'''

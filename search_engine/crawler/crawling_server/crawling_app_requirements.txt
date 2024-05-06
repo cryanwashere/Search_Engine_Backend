@@ -1,7 +1,0 @@
-uvicorn
-fastapi
-python-multipart
-requests
-beautifulsoup4
-lxml
-tldextract

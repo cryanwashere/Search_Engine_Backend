@@ -81,7 +81,7 @@ def load_json_data(filename):
     return None
 
 
-def upsert_image( payload: pvs.VectorPayload ):
+def upsert_image( model, payload: pvs.VectorPayload, client: pvs.VectorSearchClient ):
 
     '''
     
@@ -118,6 +118,24 @@ def upsert_image( payload: pvs.VectorPayload ):
         return "failure"
     except Exception as e: 
         print(f"An error occurred in processing the image data: {e}")
+        return "failure"
+
+def upsert_text( model, text_section: str, payload: pvs.VectorPayload, client: pvs.VectorSearchClient ):
+
+    try:
+        # inference the model on the image
+        with torch.no_grad():
+            text_features = model.encode_text(tokenizer([text_section])).squeeze()
+            text_features = np.array(text_features)
+
+        text_client.upsert(text_features, payload)
+
+        return "success"
+    
+    except Exception as e:
+        print(f"An error occurred in processing the image data: {e}")
+        return "failure"
+
 
 
 
@@ -225,113 +243,4 @@ if __name__ == "__main__":
 
 
 
-
-
-'''
-for filename in filenames_to_index:
-    
-    print(f"Indexing image queue file: {file}")
-
-    page_index_path = os.path.join(crawl_dir, file)
-    client_file = file.split(".")[0] + ".pkl"
-    client_path = os.path.join("/home/sshfs_volume/index/vector_index/image", client_file)
-
-    # load the vector search client
-    client = pvs.VectorSearchClient(client_path)   
-
-    # load the image queue
-    page_list = load_json_data(queue_path)['indexed_pages']
-    print(f"processing queue of {len(page_list)} pages")
-
-    # iterate through the image queue normally
-    for i, page in enumerate(page_list):
-        for image_url in page['page_index_data']['text_sections']:
-            
-
-    # save the client's progress
-    client.save()
-    print(f"saved vector client to {client_path}")
-    
-print("completed indexing last queue file. process complete. ")
-'''
-
-
-
-
-
-
-
-
-
-
-
-#IGNORE EVERYTHING BELOW HERE
-
-
-
-
-
-
-
-
-'''
-
-# load the vector search client
-client = pvs.VectorSearchClient(client_path)   
-
-# load the image queue
-image_queue = load_json_data(queue_path)
-print(f"processing queue of {len(image_queue)} images")
-
-# iterate through the image queue normally
-for i, image_dict in enumerate(image_queue):
-    upsert_result = upsert_image_url(image_dict['image_url'], image_dict['page_url'])
-    print(f"({i+1}/{len(image_queue)}) image url: {image_dict['image_url'][:100]}, status: {upsert_result} ")
-
-# save the client's progress
-client.save()
-print("finished saving vector index. process complete.")
-
-'''
-
-
-
-
-
-
-
-
-
-
-
-# ignore this for now
-
-class BatchIndexer: 
-    '''
-    
-        meant to speed up the process of inferencing images. This will store a tensor, where images are continuously concatenated together. When the batch has reached a specific dimensionality, it will then generate features for the entire batch
-    
-    '''
-    def __init__(self):
-        
-        self.batch = None
-        self.batch_size = 32
-
-        self.payload_queue = list()
-
-    def up(self, image_tensor, image_payload):
-        
-        print(f"image tensor shape: {image_tensor.shape}")
-        if self.batch is None:
-            self.batch = image_tensor
-        else: 
-            self.batch = torch.cat((self.batch, image_tensor), 0)
-        
-        # one the batch size has been reached, the embedding generation operation is performed
-        if self.batch.shape >= self.batch_size:
-            pass
-
-    def done(self):
-        '''The process is finished, so embed whatever is left of the batch'''
-        pass
 
