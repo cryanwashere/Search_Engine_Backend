@@ -2,14 +2,18 @@
 
 class Logger: 
     def __init__(self):
-        pass
+        self.verbose = False
     def debug(self, message):
         if self.debug: 
             print(f"[debug] {message}")
     def error(self, message):
         print(f"[ERROR] {message}")
+
+
+
     def log(self, message):
-        print(f"{message}")
+        if self.verbose: 
+            print(f"{message}")
     @staticmethod
     def format_number(num):
         num_str = str(num)

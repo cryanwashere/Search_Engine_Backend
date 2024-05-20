@@ -18,6 +18,61 @@ sys.path.append('/home/sshfs_volume/Search_Engine_Backend')
 import search_engine.crawler.index_data_structure as index_data_structure
 
 
+def extract_wiki_links(html_content):
+    
+    # initialize parser
+    soup = BeautifulSoup(html_content, 'html.parser')
+    links = soup.find_all('a')
+
+    # get only the links with hrefs
+    links = [link for link in links if "href" in link.attrs]
+
+    # get the references from the links
+    links = [link["href"] for link in links]
+
+    # clear out empy links
+    links = [link for link in links if link != '']
+    
+    _links = list()
+    for link in links:
+        
+        if "wikipedia.org" in link:
+            continue
+
+        if "wikidata.org" in link:
+            continue
+
+        if "wikimedia" in link:
+            continue
+
+        if "https://" in link:
+            continue
+
+        if ":" in link:
+            continue
+
+        if "#" in link:
+            continue
+
+        if "%" in link:
+            continue
+
+        if "&" in link:
+            continue
+        
+        if 'disambiguation' in link:
+            continue
+
+        if not "https://" in link:
+            link = urljoin("https://wikipedia.org",link)
+
+        _links.append(link)
+
+    links = _links
+    del _links
+
+    return links
+
 
 def remove_wiki_references(text) -> str:
     '''

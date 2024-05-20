@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel
 import uuid
 import numpy as np
@@ -8,7 +7,7 @@ import sys
 from dataclasses import dataclass
 import hashlib
 import json
-from typing import List
+from typing import List, Set
 import custom_logger
 
 import math
@@ -17,12 +16,8 @@ import math
 @dataclass
 class VectorPayload:
 
-    image_url : str
-    page_url : str
+    payload_str : str
     _id : str
-    
-    def json(self):
-        return self.__dict__
     
 
 @dataclass
@@ -174,18 +169,6 @@ class VectorSearchClient:
         self.hash_map[payload._id] = point_vector
 
 
-def hyperspherical_coordinates(x):
-    """
-    Calculate angular coordinates of the vectors in `x` along the first axis.
-
-    Source:
-    https://en.wikipedia.org/wiki/N-sphere#Spherical_coordinates
-    """
-    a = x[1:] ** 2
-    b = np.sqrt(np.cumsum(a[::-1], axis=0))
-    phi = np.arctan2(b[::-1], x[:-1])
-    phi[-1] *= np.sign(x[-1])
-    return phi
 
 def hash_str(string : str):
     """
@@ -200,92 +183,109 @@ def hash_str(string : str):
     # there is no need for the hash to be giant
     return hex_digest[:10]
 
+def directory_tree_path(input_str : str):
+    '''
+    given an input string, find its sub path in the directory string 
+    '''
+    page_url_hash = hash_str(input_str)
+    page_path = "/".join(page_url_hash)
+    return page_path
+
+class UnstructuredVectorIndex:
+    '''
+    
+        This will represent a directory, containing files of a vector index, which are going to be unstructured. The files will be pickle files, which contain a dictionary. The dictionary will map point ID strings, to PointVector objects.
+
+        The object will store a dictionary called 'hash_map', representing the current index. As new points are upserted to the unstructured index, will be inserted into the dictionary, with their _id as the key. When the number of entries in the dictionary reaches 'file_size', the dicitionary will be saved in a pickle file, and then deleted from RAM.
+
+        Parameters: 
+            path: the path to the directory where the files will be saved
+            file_size: the number of points to store in each file
+    
+    '''
+
+    hash_map : dict[str, PointVector]    
+
+    def __init__(self, path, file_size=500):
+
+        self.hash_map = dict()
+
+        # the number of points to store, before saving a new file
+        self.file_size = file_size
+        
+        # check to see if anything exists at the path, and if there is nothing, make a directory where the storage will exist
+        self.path = path
+        if not os.path.isdir(path):
+            print(f"No unstructured vector index found, creating new one at: {self.path}")
+            os.mkdir(path)
+        else:
+            print(f"found unstructured vector index at: {self.path}")
+
+    def upsert(self, point: PointVector):
+        # insert the point into the hash_map
+        self.hash_map[point.payload_id] = point
+
+        if len(self.hash_map.keys()) >= self.file_size:
+            self.save()
+    
+    def save(self):
+        '''
+        write the hash map to a file, and then delete the contents of the hash map
+        '''
+
+        # choose a path to store the directory tree
+        tree_path = directory_tree_path(str(uuid.uuid1))
+
+        # join it to the full tree path
+        full_tree_path = os.path.join(self.path, tree_path)
+
+        print(f"saving file in unstructured index to: {full_tree_path}")
+        # save the file the hash map to a file 
+        with open(full_tree_path, 'wb') as f:
+            pickle.dump(self.hash_map, f)
+            f.close()
+        
+        # clear out the hash map 
+        self.hash_map = dict()
+
+
+
+
+
+
+
+
+
+
+
+
 
 @dataclass
-class AtlasNode: 
+class PointGraphNode:
+    point: PointVector
+    # maps the level, to a set containing the ids of all the neighbors on that level 
+    neighbors: dict[int, Set[str]]
 
-    # a uuid representing the node 
-    _id : str
-    
-    # Is the following node a leaf:
-    is_leaf : bool 
-
-    # if the node is a leaf, then this is where the file containing the node's vectors are stored. 
-    #file_path : str
-    # for testing when nothing is saved to disk
-    bucket : list
-
-    # maps the hash of each distance in distances (converted to a string), to the id of the child node that corresponds to the distance
-    distance_codebook : dict[str, str]
-    # distances between each of the child nodes, and the current node's centroid
-    distances : np.array
-
-    # if the node is not a leaf, then this is a dict containing all of the child nodes. 
-    child_nodes : dict[str, object]
-
-    # the vector representing the node's centroid. allows the node to be compared to other nodes 
-    centroid : np.array 
-
-    '''
-    Creates a new child node with 'vec' as its centroid
-    
-    Note that this merely completes the process of adding the child node (and allowing it to be found). it does not ensure that the parent node has less than 'tree_split' many child nodes
-    '''
-    def add_child(self, vec: np.array): 
-        # create the new child node of this node 
-        new_child_node_id = str(uuid.uuid1())
-        new_child_node = AtlasNode(
-            _id = new_child_node_id,
-            is_leaf = True, 
-            bucket = list(),
-            distance_codebook = dict(),
-            distances = np.array([]), 
-            child_nodes = dict(),
-            centroid = vec
+class PointGraph: 
+    def __init__(self, path):
+        self.path = path 
+    def insert(self, point: PointVector):
+        new_node = PointGraphNode(
+            point=point, 
+            neighbors=None
         )
-
-        # add the child node to the child node dictionary
-        self.child_nodes[new_child_node_id] = new_child_node
-
-        # find the distance between the child node's centroid, and this node's centroid
-        d = float(np.sqrt(((vec - self.centroid) ** 2).sum()))
-        
-        # append this distance to the list of distances
-        self.distances = np.append(self.distances, d)
-
-        # find the hash for the distance float
-        d_hash = hashlib.sha256(str(d).encode()).hexdigest()
-
-        # insert the hash of the distance into this node's codebook, mapping to the new child node's id
-        self.distance_codebook[d_hash] = new_child_node_id
-
-    '''
-    Parameters:
-        is_leaf: bool 
-        centroid: np.array
-    '''
-    @staticmethod
-    def root_init(dim):
-
-        node = AtlasNode(
-            _id = str(uuid.uuid1()), 
-            bucket = list(),
-            distance_codebook=dict(),
-            distances=np.array([]), 
-            child_nodes=dict(), 
-            is_leaf=True,
-            centroid=np.zeros(dim) # the first root node will be at the origin
-        )
-        return node
+    def SELECT_NEIGHBORS_SIMPLE(q, C, M):
+        '''
+        Parameters: 
+            q: base element
+            C: Candidate elements
+            M: number of neighbors to return
+        '''
+        pass
         
 
-
-def find_distance_hash(distance: float, node: AtlasNode):
-    differences = np.abs(node.distances - distance)
-    min_difference_idx = np.argsort(differences)[0]
-    min_distance = node.distances[min_difference_idx]
-    min_distance_hash = hashlib.sha256(str(min_distance).encode()).hexdigest()
-    return node.distance_codebook[min_distance_hash]
+class VectorIndexNode: 
+    pass 
 
 @dataclass
 class VectorIndexAtlas: 
@@ -293,33 +293,7 @@ class VectorIndexAtlas:
     Store the a 'map' of the vector grid
     '''
 
-    # the root of the storage tree
-    root: AtlasNode
-
-    # the total number of points in the index
-    point_count : int
-
-    # the dimension of the vector index
-    dim : int 
-
-    # a string representing what type of distance the atlas uses. 
-    # options are: 'euclidean', 'cosine', 'dot_product'
-    distance_metric : str
-
-    # defines how many points can be at a node until the tree splits
-    tree_split : int
-
-    '''
-    Parameters: 
-        dim,
-        distance_metric, 
-        tree_split
-    '''
-    def __init__(self, **kwargs):
-        self.point_count = 0
-        self.root = AtlasNode.root_init(dim=kwargs['dim'])
-
-        self.__dict__.update(kwargs)
+    pass
 
 
 class VectorIndex:
@@ -335,49 +309,24 @@ class VectorIndex:
             distance_metric: str
             tree_split: int
     
+
+
+    Here is how the directory that the vector index represents should be structured: 
+
+    path:
+        atlax.pkl
+        storage:
+            
+
+    
     '''
     def __init__(self, path, **kwargs):
         
-        self.path = path
-        self.atlas_path = os.path.join(path, "atlas.pkl")
-        self.storage_path = os.path.join(path, "storage")
+        # storage for the vectors
+        self.unstructured_index_path = os.path.join(path, "unstructured_index")
 
-
-        # if the directory where the index is intended to be stored does not exist, then create a new index directory
-        if not os.path.isdir(self.path):
-            # create the directory where the index will be stored
-            os.mkdir(self.path)
-            # we also assume that if there is no atlas, than the index is new, so we create the storage directory
-            os.mkdir(self.storage_path)
-
-
-        # check if the atlas exists. if the atlas does not exist, then this is a new vector client, and a new atlas needs to be created. 
-        # the atlas is saved as a python pickle object
-        if not os.path.isdir(self.atlas_path):
-            print(f"creating new index at: {self.path}")
-
-            # initialize the atlas 
-            self.atlas = VectorIndexAtlas(
-                dim = kwargs['dim'],
-                distance_metric = kwargs['distance_metric'],
-                tree_split = kwargs['tree_split']
-            )
-            
-
-        # if the atlas does exist, then open the atlas
-        else: 
-            print(f"found index at {self.path}")
-            with open(self.atlas_path,"rb") as f:
-                self.atlas = pickle.load(f)
 
         
-
-        # simple logging
-        self.logger = custom_logger.Logger()
-
-
-        # just for testing
-        self.all_vectors = list()
 
 
     @staticmethod
@@ -410,86 +359,10 @@ class VectorIndex:
         pass
     
     def insert(self, vector: np.array):
-        '''
-        insert the vector into the index
-        '''
-
-        self.all_vectors.append(vector)
-
-
-        # start the search with the root node
-        node = self.atlas.root
-
-        # iteratively navigate the tree to find where the node is supposed to be 
-        while not node.is_leaf: 
-            # find the distance between the vector and the the node's point 
-            r = np.sqrt(((vector - node.centroid) ** 2).sum())
-
-            # find the bucket where the vector is supposed to be 
-            r_hash = find_distance_hash(r, node)
-
-            # proceed to the next node in the tree
-            node = node.child_nodes[r_hash]
-
-        else: 
-            # is the bucket full? 
-            if len(node.bucket) + 1 >= self.atlas.tree_split:
-                self.logger.log(f"bucket is full. creating new bucket for {node._id}. (bucket currently contains: {len(node.bucket)} points)")
-
-                # if the bucket is full, then make a new child node for each of the vectors in the bucket (there should be self.atlas.tree_split child nodes)
-                for vec in node.bucket + [vector]:
-                    # create a child node for the node, with the vector as it's centroid
-                    node.add_child(vec)    
-                
-                # make sure that the node is not a leaf
-                node.is_leaf = False
-
-                # keep the bucket for now. 
-                #node.bucket = None
-
-            # if the bucket is not full, then add the node to the bucket
-            else:
-                node.bucket.append(vector)
+        pass
         
     def query(self, q: np.array, k: int = 5):
-        # start the search with the root node
-        node = self.atlas.root
-
-        depth = 0 
-
-        # iteratively navigate the tree to find where the node is supposed to be 
-        while not node.is_leaf: 
-            # find the distance between the vector and the the node's point 
-            r = np.sqrt(((q - node.centroid) ** 2).sum())
-
-            # find the bucket where the vector is supposed to be 
-            r_hash = find_distance_hash(r, node)
-
-            # ensure that the child node does not have any empty bucket
-            if len(node.child_nodes[r_hash].bucket) <= 0:
-                break
-            else: 
-                # proceed to the next node in the tree
-                node = node.child_nodes[r_hash]
-                depth += 1
-
-        # the node is a leaf 
-        self.logger.log(f"reached leaf node. bucket contains: {len(node.bucket)} points")
-        bucket_distances = np.sqrt(((q - np.array(node.bucket)) ** 2).sum(axis=1))
-        
-        self.logger.log(f"depth: {depth}, distances: {bucket_distances.shape}")
-        
-        sorted_idx = np.argsort(bucket_distances)
-
-        topk = bucket_distances[sorted_idx[:k]]
-
-        print(f"distances of closest points: {topk}")
-
-        all_distances = np.sqrt(((q - np.array(self.all_vectors)) ** 2).sum(axis=1))
-        print(f"(brute force) distances of closest point: {all_distances[np.argsort(all_distances)[:k]]}")
-
-        print(f"distance of farthest point: {all_distances[np.argsort(all_distances)[-1]]}")
-
+     pass
 
         
     

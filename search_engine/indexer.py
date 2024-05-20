@@ -6,34 +6,16 @@
 
 '''
 
-
-
-
-import pickle
 import os
 import io
-import time
-import json
 import requests
 
-import open_clip
+
+#import open_clip
 import torch
 from PIL import Image
 import numpy as np
 
-
-import python_vector_search as pvs
-
-
-
-
-#import multiprocessing
-#from concurrent.futures import ThreadPoolExecutor
-from urllib.parse import urljoin, urlparse
-import requests
-
-
-import crawler.parse as parse
 
 
 
@@ -57,43 +39,20 @@ def open_image_from_url(url):
         print(e)
         return None
 
-def load_json_data(filename):
-    """
-    This function loads a JSON file containing a list of dictionaries 
-    and returns the list of dictionaries.
-
-    Args:
-        filename: The path to the JSON file.
-
-    Returns:
-        A list of dictionaries loaded from the JSON file.
-    """
-    try:
-        # Open the file in read mode
-        with open(filename, 'r') as infile:
-            # Load the JSON data from the file
-            data = json.load(infile)
-            return data
-    except FileNotFoundError:
-        print(f"Error: File {filename} not found.")
-    except json.JSONDecodeError:
-        print(f"Error: Invalid JSON format in file {filename}.")
-    return None
 
 
-def upsert_image( model, payload: pvs.VectorPayload, client: pvs.VectorSearchClient ):
+
+def generate_image_url_embedding( model, image_url: str ):
 
     '''
     
         Take in an image url, load the image, generate embeddings for it with CLIP, and then upsert the embeddings to the vector search client
+
+        Parameters:
+            model: the pytorch model used for generating embeddings
+            image_url: the url of the image to be indexed
     
     '''
-
-    # make sure that it has not already been indexed
-    # note that by using "image_url in client.hash_map" instead of "image_url in client.hash_map.keys()", we can check whether the image is in index in O(1) time instead of O(n) time.
-
-    if payload.image_url in client.hash_map:
-        return "already indexed"
 
     try:
         # fetch the image with an HTTP request
@@ -120,7 +79,17 @@ def upsert_image( model, payload: pvs.VectorPayload, client: pvs.VectorSearchCli
         print(f"An error occurred in processing the image data: {e}")
         return "failure"
 
-def upsert_text( model, text_section: str, payload: pvs.VectorPayload, client: pvs.VectorSearchClient ):
+def generate_text_embedding( model, tokenizer, text_section: str ):
+    '''
+    
+        take a text section, and generate an embedding for the text section. 
+
+        Parameters:
+            model: the pytorch model for embedding
+            tokenizer: tokenize the text section
+            text section: the section of text to generate an embedding for 
+    
+    '''
 
     try:
         # inference the model on the image
