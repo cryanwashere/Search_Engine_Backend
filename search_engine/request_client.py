@@ -3,7 +3,7 @@
     The purpose of this file is to contain code for the RequestClient object. All HTTP requests made in this project should be done from inside a request client. The request client exists to manage complexity issues, such as specific headers for a crawl.
 
 '''
-
+ 
 
 import requests
 import parse
@@ -54,7 +54,7 @@ class RequestClient:
             self.logger.error(f"recieved non 200 status code (code {response.status_code}): {url}")
 
 
-    def process_page(self, page_index_client, page_url: str):
+    def process_page(self, page_index_client: page_index.PageIndexClient, page_url: str):
         
         # request and extract the page content
         page_data = page_index.PageIndexData(**self.load_page_dict(page_url))
@@ -72,11 +72,3 @@ class RequestClient:
             page_index_client.upsert_image_bytes( image_url , image_bytes )
 
 
-class CrawlSession:
-    '''
-    
-        
-    
-    '''
-    def __init__(self):
-        pass
