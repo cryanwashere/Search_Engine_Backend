@@ -1,7 +1,7 @@
 import python_vector_search as pvs
 import search.dictionary_search as di
 
-class SearchClient:
+class SearchEngineClient:
     '''
     
         The functionality of the search engine

@@ -1,4 +1,4 @@
-
+from PIL import Image
 from dataclasses import dataclass
 import dataclasses
 from typing import List
@@ -54,7 +54,7 @@ def hex_digest_hash(string: str) -> str:
     hex_digest = hash_object.hexdigest()
 
     return hex_digest
-    
+
 
 class PageIndexClient:
     '''
@@ -144,13 +144,50 @@ class PageIndexClient:
         with open(page_save_path, "w") as f:
             json.dump(page_data.dict(), f)
 
-    def upsert_image_data(self, image_url : str, image_bytes : bytes):
+    def upsert_image_bytes(self, image_url : str, image_bytes : bytes):
+        '''
+        Upsert the image to the page index
+
+        Parameters: 
+            image_url : the url of the image being upserted
+            image_bytes : the bytes of the image
+        '''
         # the path to save the image
         image_save_path = self.image_url_path(image_url)
 
         # save the file in whatever its correct format is: 
         with open(image_save_path, "wb") as f:
             f.write(image_bytes)
+    
+    def retrieve_page_data(self, page_url) -> PageIndexData:
+        '''
+        Given a page url, retrieve the page data if it has been indexed
+        '''
+        page_save_path = self.page_url_path(page_data.page_url)
+
+        try:
+            with open(page_save_path, "r") as f:
+                page_data_dict = json.load(f)
+                
+                # convert to a PageData object
+                page_data = PageIndexData(**page_data_dict)
+                
+                return page_data
+        except Exception as e: 
+            print(f"failed to load page data for url {page_url}: {e}")
+    
+    def retrieve_image(self, image_url) -> Image:
+        '''
+        Given an image url, retrieve the image if it has been indexed
+        '''
+        image_save_path = self.image_url_path(image_url)
+
+        try:
+            return Image.open(image_save_path)
+        except Exception as e: 
+            print(f"failed loading image: {e}")
+
+
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
     This script crawls a subset of the wikipedia articles from the wikipedia title list. It requires the following environment variables
 
         TITLES_FILE
-        VOLUME_PATH
+       
 
 '''
 import os
@@ -13,34 +13,11 @@ import json
 
 import sys
 import uuid
-import index_storage
+import custom_logger
 
 # the filename of the titles file that is being crawled from 
 titles_file_env = os.environ["TITLES_FILE"]
-# the path to the volume on whatever machine the crawler is being run 
-volume_path_env = os.environ['VOLUME_PATH']
 
-sys.path.append(os.path.join(volume_path_env, "Search_Engine_Backend/search_engine"))
-import python_vector_search as pvs
-import open_clip
-import torch
-from PIL import Image
-import numpy as np
-import indexer 
-
-from dataclasses import dataclass
-from typing import List
-
-import custom_logger
-
-# load the CLIP models to encode image or text features
-model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
-tokenizer = open_clip.get_tokenizer('ViT-B-32')
-print("loaded CLIP models and tokenizer")
-
-
-
-logger = custom_logger.Logger()
 
 
 # function for parsing the titles file
@@ -57,11 +34,7 @@ class WikipediaCrawlerSession:
             crawl_start: the line of the given titles file to start crawling (relative to the titles file)
             crawl_end: the line of the given titles file to stop crawling (relative to the titles file)
             titles_path: the path of the titles file 
-            index_path: the path of the index 
-
-
-
-    
+            index_path: the path of the index     
     '''
     def __init__(self, 
     
@@ -115,53 +88,18 @@ class WikipediaCrawlerSession:
 
         # REQUEST THE WIKIPEDIA PAGE
         # make our url from the title 
-        url = "https://en.wikipedia.org/wiki/" + title
+        page_url = "https://en.wikipedia.org/wiki/" + title
         # wikipedia treats me better
         headers = {'User-Agent': 'BaleneSearchCrawler/0.0 (http://138.68.149.96:8000/search; cjryanwashere@gmail.com'}
         # get the html for the web page
 
-        response = requests.get(url, headers=headers)
+        response = requests.get(page_url, headers=headers)
         if response.status_code == 200:
-            self.pages_crawled = self.pages_crawled + 1
-
             
             # EXTRACT CONTENT FOR THE PAGE INDEX
             html_content = response.text  
-            page = parse.extract_html(html_content, url)
+            page_dict = parse.extract_html(html_content, page_url)
 
-            # save the data of the page to disk
-            page_save_path = index_storage.save_page_data( page )
-
-
-            logger.log(f"Crawling page: {page.page_index_data.page_url}")
-            logger.log(f"data saved to: {page_save_path}")
-
-            
-
-            # for right now, we will only index the first text section in the wikipedia article. Otherwise, the vector index will grow way too fast
-            for i, text_section in enumerate(page.index_data.text_sections[:1]):
-                upsert_status = indexer.upsert_text(
-                    model,
-                    text_section = text_section, 
-                    payload = pvs.VectorPayload(
-                        image_url = "",
-                        page_url = page.page_index_data.page_url,
-                        _id = f"i_{page.page_index_data.page_url}",
-                    ),
-                    client = text_client,
-                )
-                logger.log(f"\t indexed text section")
-            for image_url in page.index_data.image_urls: 
-                upsert_status = indexer.upsert_image(
-                    model, 
-                    payload = pvs.VectorPayload(
-                        image_url = image_url,
-                        page_url = page.page_index_data.page_url,
-                        _id = image_url
-                    ),
-                    client = image_client
-                )
-                logger.log(f"\t indexed image url: {image_url[:100]}")
             
 
         else:

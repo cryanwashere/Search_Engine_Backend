@@ -19,7 +19,7 @@ import numpy as np
 
 
 
-
+ 
 # load an image, given its url
 def open_image_from_url(url):
     try:
