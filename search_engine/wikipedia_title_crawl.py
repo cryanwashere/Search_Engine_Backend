@@ -98,9 +98,7 @@ class WikipediaCrawlerSession:
             
             # EXTRACT CONTENT FOR THE PAGE INDEX
             html_content = response.text  
-            page_dict = parse.extract_html(html_content, page_url)
-
-            
+            page_dict = parse.extract_html(html_content, page_url)  
 
         else:
             logger.error(f"recieved non 200 status code (code {response.status_code}): {url}")

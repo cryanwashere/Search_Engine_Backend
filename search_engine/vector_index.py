@@ -296,7 +296,7 @@ class VectorIndexAtlas:
     pass
 
 
-class VectorIndex:
+class VectorIndexClient:
     '''
 
     A python object used to represent a vector index 

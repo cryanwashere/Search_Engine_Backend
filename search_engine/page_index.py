@@ -1,7 +1,7 @@
 from PIL import Image
 from dataclasses import dataclass
 import dataclasses
-from typing import List
+from typing import List, Tuple
 import uuid
 import tldextract
 import hashlib
@@ -186,6 +186,22 @@ class PageIndexClient:
             return Image.open(image_save_path)
         except Exception as e: 
             print(f"failed loading image: {e}")
+    
+    def retrieve_page_images(self, page_url: str) -> Tuple[PageIndexData, List[Image]]:
+        '''
+        Given a page url, retrieve the data for the page, and all of the images in the page 
+        '''
+
+        # get the page data
+        page_data = self.retreive_page_data(page_url)
+
+        # for each of the images in the page, load the image
+        image_list = list()
+        for image_url in page_data.image_urls:
+            image_list.append(self.retrieve_image(image_url))
+        
+        return page_data, image_list
+
 
 
 
