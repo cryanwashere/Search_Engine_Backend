@@ -15,7 +15,14 @@ class CrawlPlanDatabaseClient:
 
         # connect to the database
         self.conn = sqlite3.connect(db_path)
-        c = conn.cursor()
+        self.c = conn.cursor()
 
+        # create the table for the database if it has not been created
+        self.c.execute('''CREATE TABLE IF NOT EXISTS page_url_table (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT)''')
+
+        self.conn.commit()
+    
+    def insert_page_url(page_url : str):
+        self.c.execute()
 
 
