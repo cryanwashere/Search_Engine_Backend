@@ -1,10 +1,16 @@
-torch
+-f https://download.pytorch.org/whl/torch_stable.html
+torch==1.13.1+cpu
+torchvision==0.17.2
 open_clip_torch
 numpy
 Pillow
 uvicorn
 fastapi
-gdown
 python-multipart
 requests
 pydantic
+tqdm
+beautifulsoup4
+lxml
+tldextract
+cryptography
