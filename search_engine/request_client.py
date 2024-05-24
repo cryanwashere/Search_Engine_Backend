@@ -3,7 +3,7 @@ import pywikibot
 import requests
 import parse
 from custom_logger import Logger
-import page_index
+
 
 
 
@@ -38,7 +38,7 @@ class RequestClient:
             self.logger.error(e)
             return None
     
-    def load_page_dict(self, page_url: str) -> dict:
+    def load_page_parse_result(self, page_url: str) -> dict:
         '''
         Given a url for a web page, load the html content of the url, and extract the data from the html content
         '''
@@ -68,38 +68,10 @@ class RequestClient:
         return len(backlinks)
     
     def check_redirect(self, url):
-        response = requests.get(url)
-        soup = BeautifulSoup(response._content)
-        canonical = soup.find('link', {'rel': 'canonical'})
-        return canonical['href'] != url
+        parse_result = self.load_page_parse_result(url)
+        return parse_result.redirected
 
-    def process_page(self, page_index_client: page_index.PageIndexClient, page_url: str, use_redirects=False):
-        
-        # request and extract the page content
-        self.logger.log(f"getting page data for {page_url[-100:]}")
-
-        # load the data for the page
-        parse_result = self.load_page_dict(page_url)
-
-        # the data for the page could not be loaded
-        if parse_result == None:
-            return False
-
-        page_data = page_index.PageIndexData(**parse_result.page_dict)
-
-        # add the page data to the index
-        page_index_client.upsert_page_data(page_data)
-
-        # iterate through each of the images, and upsert each of them into the page index
-        for image_url in page_data.image_urls:
-            
-            # request the bytes for the image 
-            self.logger.log(f"\t getting image bytes for {image_url[-100:]}")
-            image_bytes = self.load_image_bytes(image_url)
-
-            if image_bytes != None: 
-                # save the image data to the page index
-                page_index_client.upsert_image_bytes( image_url , image_bytes )
+    
 
 
 if __name__ == "__main__":
