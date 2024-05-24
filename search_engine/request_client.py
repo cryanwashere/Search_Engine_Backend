@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-import pywikibot
+#import pywikibot
 import requests
 import parse
 from custom_logger import Logger

@@ -233,9 +233,12 @@ if __name__ == "__main__":
 
     command = sys.argv[1]
 
-    match command: 
-        case "find_path":
-            print(f"path for {sys.argv[2]}:")
-            print(page_index_client.page_url_path(sys.argv[2]))
+    #match command: 
+    #    case "find_path":
+    #        print(f"path for {sys.argv[2]}:")
+    #        print(page_index_client.page_url_path(sys.argv[2]))
+    #    case "show_page":
+    #        print(f"showing page data for: {sys.argv[2]}")
+    #        print(page_index_client.retrieve_page_data(sys.argv[2]))
 
     #print(page_index_client.retrieve_page_data('https://en.wikipedia.org/wiki/!!!'))
