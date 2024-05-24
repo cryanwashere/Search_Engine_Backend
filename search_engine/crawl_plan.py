@@ -1,5 +1,6 @@
 from sqlitedict import SqliteDict
-
+import request_client
+import parse
 
 class CrawlPlanDatabaseClient:
     '''
@@ -13,6 +14,13 @@ class CrawlPlanDatabaseClient:
 
     def __init__(self, db_path: str):
         self.db = SqliteDict(db_path)
+    
+    def read_url(self, idx: int):
+        return self.db[str(idx)]
+    
+    def finish(self):
+        self.db.close()
+
     
     def load_wikipedia_titles(self, wikipedia_titles_path):
         '''
@@ -31,12 +39,43 @@ class CrawlPlanDatabaseClient:
             f.close()
             print("process finished")
 
-    def read_url(self, idx: int):
-        return self.db[str(idx)]
-    
-    def finish(self):
-        self.db.close()
 
+
+    
+    
+
+
+    def filter_url_db(self, url_db_path):
+        '''
+        Given another url db path, open that crawl plan, and check all the urls. The urls that get filtered will be saved
+        '''
+        self.request_client = request_client.RequestClient()
+
+        import threading
+        import concurrent.futures
+
+        self.db_to_filter = CrawlPlanDatabaseClient(url_db_path)
+    
+
+    def filter_url(self, url) -> bool:
+        '''
+        determine if the URL should be crawled
+        '''
+
+        is_redirect = self.request_client.check_redirect(url)
+        return is_redirect
+    
+    def upsert_if_filtered(self, i):
+        url = self.db_to_filter.read_url(i)
+        if self.filter_url(url):
+            self.db[]
+
+
+
+
+        
+
+    
     
     
 
