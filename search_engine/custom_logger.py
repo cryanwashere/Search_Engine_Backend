@@ -2,7 +2,7 @@
 
 class Logger: 
     def __init__(self, object_name):
-        self.verbose = False
+        self.verbose = True
         self.object_name = object_name
     def debug(self, message):
         if self.debug: 
@@ -14,7 +14,7 @@ class Logger:
 
     def log(self, message):
         if self.verbose: 
-            print(f"[{self.object_name}.log]{message}")
+            print(f"[{self.object_name}.log] {message}")
             
     @staticmethod
     def format_number(num):

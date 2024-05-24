@@ -10,12 +10,13 @@ import requests
 from urllib.parse import urljoin
 import re
 import time
+
 import os
 from io import BytesIO
 #from PIL import Image
 import sys
-sys.path.append('/home/sshfs_volume/Search_Engine_Backend')
-import search_engine.crawler.index_data_structure as index_data_structure
+from dataclasses import dataclass
+
 
 
 def extract_wiki_links(html_content):
@@ -194,11 +195,23 @@ def extract_html(html_content, url) -> dict[str, object]:
         #print(text)
         text_sections.append(text)
 
+    # determine if the page is a redirect
+    canonical = soup.find('link', {'rel': 'canonical'})
+    redirect = canonical['href'] != url
 
-
-    return {
+    return ParseResult(
+        page_dict = {
         "page_url" : url,
         "text_sections" : text_sections,
         "image_urls" : image_urls,
         "time_indexed" : str(time.time())
-    }
+        },
+        redirected = redirect
+    )
+
+
+
+@dataclass
+class ParseResult:
+    page_dict: dict
+    redicted: bool

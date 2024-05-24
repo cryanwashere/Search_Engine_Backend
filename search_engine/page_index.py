@@ -107,9 +107,14 @@ class PageIndexClient:
         page_id = hex_digest_hash(page_url)
 
         # the path to where it exists in the file tree. the path comprises of the first 15 characters of its ID
-        tree_path = "/".join(page_id[:15])
+        tree_path = "/".join(page_id[:15])  
 
-        return os.path.join(self.page_data_path, tree_path, page_id + ".json")
+
+
+        # the directory where the page data gets stored
+        page_data_directory = os.path.join(self.page_data_path, tree_path)
+
+        return page_data_directory, os.path.join(page_data_directory, page_id + ".json")
 
     def image_url_path(self, image_url : str):
         '''
@@ -134,11 +139,18 @@ class PageIndexClient:
         # this is nescessary for saving the image
         image_extension = image_url.split(".")[-1]
 
-        return os.path.join(self.asset_path, tree_path, image_id + f".{image_extension}")
+        # the directory where the page is stored
+        image_directory = os.path.join(self.asset_path, tree_path)
+
+        return image_directory, os.path.join(image_directory,  image_id + f".{image_extension}")
 
     def upsert_page_data(self, page_data : PageIndexData):
         # the path to save the page data
-        page_save_path = self.page_url_path(page_data.page_url)
+        page_save_dir, page_save_path = self.page_url_path(page_data.page_url)
+
+        # if the directory where the page data is stored does not exist, make it
+        if not os.path.isdir(page_save_dir):
+            os.makedirs(page_save_dir)
 
         # save the page data as a JSON file
         with open(page_save_path, "w") as f:
@@ -153,7 +165,11 @@ class PageIndexClient:
             image_bytes : the bytes of the image
         '''
         # the path to save the image
-        image_save_path = self.image_url_path(image_url)
+        image_save_dir, image_save_path = self.image_url_path(image_url)
+
+        # if the directory where the image data is stored does not exist, make it
+        if not os.path.isdir(image_save_dir):
+            os.makedirs(image_save_dir)
 
         # save the file in whatever its correct format is: 
         with open(image_save_path, "wb") as f:
@@ -163,7 +179,7 @@ class PageIndexClient:
         '''
         Given a page url, retrieve the page data if it has been indexed
         '''
-        page_save_path = self.page_url_path(page_data.page_url)
+        _, page_save_path = self.page_url_path(page_url)
 
         try:
             with open(page_save_path, "r") as f:
@@ -180,14 +196,14 @@ class PageIndexClient:
         '''
         Given an image url, retrieve the image if it has been indexed
         '''
-        image_save_path = self.image_url_path(image_url)
+        _, image_save_path = self.image_url_path(image_url)
 
         try:
             return Image.open(image_save_path)
         except Exception as e: 
             print(f"failed loading image: {e}")
     
-    def retrieve_page_images(self, page_url: str) -> Tuple[PageIndexData, List[Image]]:
+    def retrieve_page_images(self, page_url: str) -> Tuple[PageIndexData, List[type(Image)]]:
         '''
         Given a page url, retrieve the data for the page, and all of the images in the page 
         '''
@@ -207,6 +223,19 @@ class PageIndexClient:
 
 
 if __name__ == "__main__":
-    page_index_client = PageIndexClient("/home/cameron/Search_Engine/index_v1")
-    print(page_index_client.page_url_path("https://en.wikipedia.org/wiki/Google_Search"))
-    print(page_index_client.image_url_path("https://en.wikipedia.org/wiki/File:Google_Homepage.PNG"))
+    page_index_client = PageIndexClient("/home/cameron/Search_Engine/index_v1/page_index")
+    
+    #rabbit_page_data = page_index_client.retrieve_page_data("https://en.wikipedia.org/wiki/Rabbit")
+
+    #print(page_index_client.image_url_path(rabbit_page_data.image_urls[0]))
+
+    import sys
+
+    command = sys.argv[1]
+
+    match command: 
+        case "find_path":
+            print(f"path for {sys.argv[2]}:")
+            print(page_index_client.page_url_path(sys.argv[2]))
+
+    #print(page_index_client.retrieve_page_data('https://en.wikipedia.org/wiki/!!!'))
