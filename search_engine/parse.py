@@ -214,4 +214,4 @@ def extract_html(html_content, url) -> dict[str, object]:
 @dataclass
 class ParseResult:
     page_dict: dict
-    redicted: bool
+    redirected: bool

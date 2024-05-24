@@ -8,7 +8,12 @@ class EmbeddingProvider:
 
     Parameters: 
         model_name: the name of the model that is being used
-        vector_index_path: the path to the root directory of the vector index. 
+        vector_index_path: the path to the root directory of the vector index.
+
+
+    Public Methods: 
+        generate_embeddings_and_upsert:
+            given the way that the EmbeddingProvider has been initialized, create generate embeddings for whatever page content the models use, and then upsert them to their vector clients. 
     '''
 
     def __init__(self, model_name, vector_index_path):
