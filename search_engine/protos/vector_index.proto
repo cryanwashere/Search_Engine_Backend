@@ -1,0 +1,19 @@
+
+syntax = "proto3";
+
+service VectorIndex {
+    rpc Upsert (UpsertRequest) returns (UpsertResponse) {}
+}
+
+
+message UpsertRequest {
+    int32 text_section_idx = 1;
+    string image_url = 2;
+    string page_url = 3;
+
+    bytes nparray_bytes = 4;
+}
+
+message UpsertResponse {
+    string status = 1;
+}

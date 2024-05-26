@@ -34,3 +34,6 @@ journalctl -u balene_prod > /home/logs/server_1.out
 ```
 
 ```sudo docker run -e CRAWL_INSTRUCTION=400-1000 -v /home/cameron/Search_Engine:/project-dir crawling_container```
+
+
+```python3 -m grpc_tools.protoc -I. --python_out=./grpc_compiled --grpc_python_out=./grpc_compiled protos/vector_index.proto```
