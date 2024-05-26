@@ -32,3 +32,5 @@ output the log file for the server
 ```
 journalctl -u balene_prod > /home/logs/server_1.out
 ```
+
+```sudo docker run -e CRAWL_INSTRUCTION=400-1000 -v /home/cameron/Search_Engine:/project-dir crawling_container```

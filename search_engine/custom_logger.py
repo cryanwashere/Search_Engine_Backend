@@ -2,7 +2,7 @@
 
 class Logger: 
     def __init__(self, object_name):
-        self.verbose = True
+        self.verbose = False
         self.object_name = object_name
     def debug(self, message):
         if self.debug: 

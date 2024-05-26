@@ -27,6 +27,7 @@ class CrawlSession:
 
         # logging
         self.logger = custom_logger.Logger("CrawlSession")
+        self.logger.verbose = True
 
     def parse_crawl_instruction(self, crawl_instruction):
         crawl_instruction = crawl_instruction.split('-')
@@ -51,6 +52,8 @@ class CrawlSession:
 
         page_data = page_index.PageIndexData(**parse_result.page_dict)
 
+        self.logger.log(f"page has {len(page_data.text_sections)} text sections and {len(page_data.image_urls)} image(s)")
+
         # add the page data to the index
         self.page_index_client.upsert_page_data(page_data)
 
@@ -68,7 +71,8 @@ class CrawlSession:
     
     def crawl(self):
         for i in range(self.start, self.end):
-            print(f"Crawling url {i}")
+            self.logger.log(f"Crawling url {i}")
+            #print(f"{i}/{self.end}")
             url = self.crawl_plan_client.read_url(i)
             self.process_page(url)
 

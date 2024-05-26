@@ -240,5 +240,11 @@ if __name__ == "__main__":
     #    case "show_page":
     #        print(f"showing page data for: {sys.argv[2]}")
     #        print(page_index_client.retrieve_page_data(sys.argv[2]))
+    #    case "text":
+    #        print(f"showing text sections for: {sys.argv[2]}")
+    #        page_data = page_index_client.retrieve_page_data(sys.argv[2])
+    #        for text_section in page_data.text_sections:
+    #            print(text_section)
+    #            print()
 
     #print(page_index_client.retrieve_page_data('https://en.wikipedia.org/wiki/!!!'))

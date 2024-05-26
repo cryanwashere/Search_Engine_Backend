@@ -14,6 +14,9 @@ RUN pip install -r crawling_requirements.txt
 # create a volume to give the container access to the project directory
 VOLUME /project-dir
 
+# where to save the pycache (.pyc) files. Otherwise, the files will get saved in the actual project directory
+ENV PYTHONPYCACHEPREFIX=/tmp
+
 # the path to where the crawl plan is 
 ENV CRAWL_PLAN_DB_PATH=/project-dir/crawl_plans/wikipedia_v1.sqlite
 
