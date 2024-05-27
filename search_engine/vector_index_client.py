@@ -12,7 +12,7 @@ class VectorIndexClient:
     '''
 
     def __init__(self):
-        self.channel = grpc.insecure_channel('localhost:50051')
+        self.channel = grpc.insecure_channel('localhost:50000')
         self.stub = vector_index_pb2_grpc.VectorIndexStub(self.channel)
     
     def upsert(self, vector: np.array, payload: vector_index.VectorPayload):

@@ -72,6 +72,9 @@ def serve(vector_index_path):
     print(f"opened vector index at: {vector_index_path}")
     print(f"vector index has {vector_index_service.index.ngt_index.get_num_of_objects()} points")
     vector_index_pb2_grpc.add_VectorIndexServicer_to_server(vector_index_service,server)
+
+
+    # This runs in a container, so it will always serve on the same port. This is not what the port will be outside the container! The server's port is specified when the container is run, and will be forwarded to this port inside the container.
     server.add_insecure_port('[::]:50051')
 
     try: 
@@ -83,4 +86,24 @@ def serve(vector_index_path):
         vector_index_service.index.finish()
 
 if __name__ == "__main__":
-    serve('/home/cameron/Search_Engine/index_v1/vector_index/sample')
+    '''
+    
+    Initialize a gRPC server for a vector index.
+
+    the server will open the vector index specified by environment variables:
+
+
+        VECTOR_INDEX_PATH : the root directory of the vector index (the directory that stores all of the other vector indices)
+
+        MODEL_NAME : the name of the vector index to open
+    
+    '''
+
+    vector_index_path = os.environ['VECTOR_INDEX_PATH']
+
+    model_name = os.environ['MODEL_NAME']
+
+    path = os.path.join(vector_index_path, model_name)
+
+    # start the server
+    serve(path)
