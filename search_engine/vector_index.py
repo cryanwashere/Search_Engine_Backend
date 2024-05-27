@@ -1,15 +1,15 @@
-import uuid
 import numpy as np
 import pickle
 import os
 import sys
 from dataclasses import dataclass
-import hashlib
+import dataclasses
 import json
-from typing import List, Set
 import custom_logger
 from sqlitedict import SqliteDict
-import math
+import ngtpy
+
+
 
 
 @dataclass
@@ -23,6 +23,10 @@ class VectorPayload:
 
     # the page url that the content was sourced from
     page_url : str 
+
+    def dict(self):
+        return dataclasses.asdict(self)
+
     
 
 
@@ -39,14 +43,20 @@ class VectorIndex:
         self.path = path
         if not os.path.isdir(path):
             print(f"no vector index directory found at: {path}. making new one")
+            os.mkdir(self.path)
 
         # the path to where the NGT client is stored
         self.ngt_index_path = os.path.join(path, "ngt_index")
         if not os.path.isdir(self.ngt_index_path):
             print(f"no NGT index found at: {self.ngt_index_path}. making new one")
 
+            dimension = dimension=kwargs['dimension']
+            distance_type = kwargs['distance_type']
+
+            print(f"making NGT client with dimension: {dimension} and distance type: {distance_type}")
+
             # create a new NGT index at the given directory
-            ngtpy.create(path=bytes(self.ngt_index_path), dimension=kwargs['dimension'], distance_type=kwargs['distance_type'])
+            ngtpy.create(path=self.ngt_index_path, dimension=dimension ,distance_type=distance_type)
         # open the index
         self.ngt_index = ngtpy.Index(self.ngt_index_path)
 
@@ -57,5 +67,51 @@ class VectorIndex:
         self.id_map_db = SqliteDict(self.id_map_path)
 
 
+        # this is for counting how many vectors have been upserted since the object was initialized
+        self.upsert_counter = 0
+    
+    def upsert(self, vector: np.array, payload: VectorPayload):
+        # insert the id into the NGT Index
+        point_id = self.ngt_index.insert(vector)
+
+        # save the payload of the vector to the payload dictionary
+        self.id_map_db[point_id] = payload.dict()
+
+        # count the upsert
+        self.upsert_counter += 1
+
+
+        # every 500 upserts, perform a checkpoint
+        if self.upsert_counter % 500 == 0:
+            self.checkpoint()
+
+    def checkpoint(self):
+        # nescessary for the inserted vectors to be searchable
+        self.ngt_index.build_index()
+        self.ngt_index.save()
+        self.id_map_db.commit()
+    
+    def save(self):
+        self.ngt_index.save()
+    
+    def close(self):
+        self.ngt_index.close()
+        self.id_map_db.close()
+
+
+
+
         
-        
+if __name__ == "__main__":
+    
+    match sys.argv[1]:
+        case "create":
+            new_index_name = sys.argv[2]
+            new_index_dim = int(sys.argv[3])
+            new_index_distance_type = sys.argv[4]
+
+            VectorIndex(
+                f'/home/cameron/Search_Engine/index_v1/vector_index/{new_index_name}',
+                dimension = new_index_dim,
+                distance_type = new_index_distance_type
+            )
