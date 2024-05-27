@@ -24,6 +24,8 @@ class EmbeddingProvider:
             case "open_clip":
                 self.open_clip_init(vector_index_path)
                 self.generate_embeddings_and_upsert = self.open_clip
+            case "snowflake=arctic-embed":
+                pass
 
     
     def open_clip_init(self):
@@ -58,4 +60,19 @@ class EmbeddingProvider:
             # inference the model on the image
             with torch.no_grad():
                 image_features = np.array(self.model.encode_image(image).squeeze())
+    
+
+    def snowflake-arctic-embed-m_init(self):
+        from sentence_transformers import SentenceTransformer
+
+        self.model = SentenceTransformer("Snowflake/snowflake-arctic-embed-l")
+    
+    def snowflake-arctic-embed_document(self, page_url: str, page_index_client : page_index.PageIndexClient):
+
+        page_data = page_index_client.retrieve_page_data(page_url)
+
+        document_embeddings = self.model.encode(page_data.text_sections)
+    def snowflake-arctic-embed_query(self, query_text):
+        pass
+
             

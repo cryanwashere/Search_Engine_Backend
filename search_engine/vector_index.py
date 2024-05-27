@@ -26,8 +26,20 @@ class VectorPayload:
 
     def dict(self):
         return dataclasses.asdict(self)
-
     
+    @staticmethod
+    def from_proto(proto):
+        return VectorPayload(
+            text_section_idx = proto.text_section_idx,
+            image_url = proto.image_url,
+            page_url = proto.page_url
+        )
+
+
+@dataclass
+class SearchResult:
+    payload : VectorPayload
+    score : float
 
 
 
@@ -84,6 +96,18 @@ class VectorIndex:
         # every 500 upserts, perform a checkpoint
         if self.upsert_counter % 500 == 0:
             self.checkpoint()
+    
+    def search(self, query: np.array, size: int = 10):
+        ngt_results = self.ngt_index.search(query, size=size)
+        
+        search_results = list()
+        for (point_id, score) in ngt_results:
+            search_results.append(SearchResult(
+                payload = VectorPayload(**self.id_map_db[point_id]),
+                score = score
+            ))
+        return search_results
+
 
     def checkpoint(self):
         # nescessary for the inserted vectors to be searchable
@@ -98,11 +122,16 @@ class VectorIndex:
         self.ngt_index.close()
         self.id_map_db.close()
 
+    def finish(self):
+        self.checkpoint()
+        self.save()
+        self.close()
 
 
 
         
 if __name__ == "__main__":
+    
     
     match sys.argv[1]:
         case "create":
@@ -115,3 +144,4 @@ if __name__ == "__main__":
                 dimension = new_index_dim,
                 distance_type = new_index_distance_type
             )
+    

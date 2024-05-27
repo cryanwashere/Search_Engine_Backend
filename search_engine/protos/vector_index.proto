@@ -3,7 +3,7 @@ syntax = "proto3";
 
 service VectorIndex {
     rpc Upsert (UpsertRequest) returns (UpsertResponse) {}
-    rpc Search (SearchRequest) returns (SearchRequest) {}
+    rpc Search (SearchRequest) returns (SearchResponse) {}
 }
 
 
@@ -12,7 +12,7 @@ message VectorPayload {
     string image_url = 2;
     string page_url = 3;
 }
-
+ 
 
 message UpsertRequest {
     VectorPayload payload = 1;
