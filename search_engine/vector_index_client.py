@@ -3,6 +3,7 @@ import vector_index_pb2
 import vector_index_pb2_grpc
 import numpy as np
 import vector_index
+from typing import List
 
 class VectorIndexClient:
     '''
@@ -31,7 +32,10 @@ class VectorIndexClient:
 
         return upsert_response.status
     
-    def search(self, vector: np.array):
+    def search(self, vector: np.array) -> List[vector_index.SearchResult]:
+        # This method is not finished
+        # it needs to convert the search_response
+        # into the suggested return type
         search_request_proto = vector_index_pb2.SearchRequest(nparray_bytes=vector.tobytes())
 
         search_response = self.stub.Search(search_request_proto)

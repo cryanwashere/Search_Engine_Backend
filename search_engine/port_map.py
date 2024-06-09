@@ -6,5 +6,7 @@ This file can simply be imported, and used to get correct ports
 
 '''
 _map = {
-    "sample" : 50000
+    "sample" : 50000,
+    "open_clip_(text)" : 50001,
+    "open_clip_(image)" : 50002,
 }

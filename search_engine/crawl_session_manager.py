@@ -28,9 +28,12 @@ def next_sections(n: int):
     return section_plan[:n]
 
     
-crawl_sections = next_sections(4)
+crawl_sections = next_sections(8)
 
 print(f"initializing containers for the following sections: {crawl_sections}")
+proceed = input("is this ok? [y/n]")
+if proceed != "y":
+    exit()
 
 
 for (start, end) in crawl_sections: 

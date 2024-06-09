@@ -203,7 +203,7 @@ class PageIndexClient:
         except Exception as e: 
             print(f"failed loading image: {e}")
     
-    def retrieve_page_images(self, page_url: str) -> Tuple[PageIndexData, List[type(Image)]]:
+    def retrieve_page_and_images(self, page_url: str) -> Tuple[PageIndexData, List[type(Image)]]:
         '''
         Given a page url, retrieve the data for the page, and all of the images in the page 
         '''
@@ -216,7 +216,7 @@ class PageIndexClient:
         for image_url in page_data.image_urls:
             image_list.append(self.retrieve_image(image_url))
         
-        return page_data, image_list
+        return page_data, page_data.image_urls, image_list
 
 
 
