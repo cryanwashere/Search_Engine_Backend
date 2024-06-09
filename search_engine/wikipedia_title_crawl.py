@@ -3,45 +3,21 @@
     This script crawls a subset of the wikipedia articles from the wikipedia title list. It requires the following environment variables
 
         TITLES_FILE
-        VOLUME_PATH
+       
 
 '''
 import os
 import requests
 import parse
-import concurrent.futures
 import json
+
 import sys
-import index_data_structure
 import uuid
-import index_storage
+import custom_logger
 
 # the filename of the titles file that is being crawled from 
 titles_file_env = os.environ["TITLES_FILE"]
-# the path to the volume on whatever machine the crawler is being run 
-volume_path_env = os.environ['VOLUME_PATH']
 
-sys.path.append(os.path.join(volume_path_env, "Search_Engine_Backend/search_engine"))
-import python_vector_search as pvs
-import open_clip
-import torch
-from PIL import Image
-import numpy as np
-import indexer 
-
-from dataclasses import dataclass
-from typing import List
-
-import custom_logger
-
-# load the CLIP models to encode image or text features
-model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
-tokenizer = open_clip.get_tokenizer('ViT-B-32')
-print("loaded CLIP models and tokenizer")
-
-
-
-logger = custom_logger.Logger()
 
 
 # function for parsing the titles file
@@ -49,15 +25,20 @@ def title_from_line(line):
     return line[1:].replace(" ","").replace("\n","").replace("\t","")
 
 
-class WikipediaCrawler:
+class WikipediaCrawlerSession:
     '''
     
         Crawler instance extists to crawl a certain subset of the wikipedia titles. Crawls all of the titles between 'crawl_start', and 'crawl_end'
-    
+
+        Parameters: 
+            crawl_start: the line of the given titles file to start crawling (relative to the titles file)
+            crawl_end: the line of the given titles file to stop crawling (relative to the titles file)
+            titles_path: the path of the titles file 
+            index_path: the path of the index     
     '''
     def __init__(self, 
     
-        crawl_start, # relative 
+        crawl_start, # relative
         crawl_end, # relative
         titles_path,
         index_path # path of the index
@@ -74,29 +55,30 @@ class WikipediaCrawler:
 
         print(f"crawling file-relative duration: {crawl_start} -> {crawl_end}")
 
+        
+    @staticmethod
+    def get_titles(titles_path, crawl_start, crawl_end):
         # GET THE LIST OF TITLES THAT NEED TO BE CRAWLED
-        self.titles = list()
+        titles = list()
         print("opening titles file")
         # open the title file, and grab a subset of the titles without opening the entire file (there would not be enough RAM to open up the entire file)
-        with open(self.titles_path) as f:
+        with open(titles_path) as f:
             for i, line in enumerate(f):
                 # make sure that we are just grabbing titles from the range of titles to be crawled in the current run 
-                if i < self.crawl_start:
+                if i < crawl_start:
                     continue
-                if i > self.crawl_end:
+                if i > crawl_end:
                     print("finished reading title file")
                     break
                 # parse and store the title 
                 title = title_from_line(line)
-                self.titles.append(title)
+                titles.append(title)
             f.close()
-        print(f"loaded {len(self.titles)} titles for crawling")
+        print(f"loaded {len(titles)} titles for crawling")
 
+        return titles
 
-       
-
-    
-
+        
     def process_title(self, title):
         '''
         
@@ -106,54 +88,17 @@ class WikipediaCrawler:
 
         # REQUEST THE WIKIPEDIA PAGE
         # make our url from the title 
-        url = "https://en.wikipedia.org/wiki/" + title
+        page_url = "https://en.wikipedia.org/wiki/" + title
         # wikipedia treats me better
         headers = {'User-Agent': 'BaleneSearchCrawler/0.0 (http://138.68.149.96:8000/search; cjryanwashere@gmail.com'}
         # get the html for the web page
 
-        response = requests.get(url, headers=headers)
+        response = requests.get(page_url, headers=headers)
         if response.status_code == 200:
-            self.pages_crawled = self.pages_crawled + 1
-
             
             # EXTRACT CONTENT FOR THE PAGE INDEX
             html_content = response.text  
-            page = parse.extract_html(html_content, url)
-
-            # save the data of the page to disk
-            page_save_path = index_storage.save_page_data( page )
-
-
-            logger.log(f"Crawling page: {page.page_index_data.page_url}")
-            logger.log(f"data saved to: {page_save_path}")
-
-            
-
-            # for right now, we will only index the first text section in the wikipedia article. Otherwise, the vector index will grow way too fast
-            for i, text_section in enumerate(page.index_data.text_sections[:1]):
-                upsert_status = indexer.upsert_text(
-                    model,
-                    text_section = text_section, 
-                    payload = pvs.VectorPayload(
-                        image_url = "",
-                        page_url = page.page_index_data.page_url,
-                        _id = f"i_{page.page_index_data.page_url}",
-                    ),
-                    client = text_client,
-                )
-                logger.log(f"\t indexed text section")
-            for image_url in page.index_data.image_urls: 
-                upsert_status = indexer.upsert_image(
-                    model, 
-                    payload = pvs.VectorPayload(
-                        image_url = image_url,
-                        page_url = page.page_index_data.page_url,
-                        _id = image_url
-                    ),
-                    client = image_client
-                )
-                logger.log(f"\t indexed image url: {image_url[:100]}")
-            
+            page_dict = parse.extract_html(html_content, page_url)  
 
         else:
             logger.error(f"recieved non 200 status code (code {response.status_code}): {url}")
@@ -276,37 +221,10 @@ def split_durations(durations, max_duration=500):
 class CrawlPlan:
     relative_sections_to_crawl : List
 
-
-if __name__ == "__main__" :
-
-    '''
-    
-        The goal of this script is to be able to crawl every title in the given titles file. The wikipedia crawler will be created and run repeatedly, until the process is finished. This way, in the likely event that the process is interupted, it can simply be restarted. Furthermore, the result of the crawl will be broken up into many files 
-    
-    '''
-
-
-     
-        
-
-
-    
-
-    logger.log(f"using titles file: {titles_file_env}")
-
-    # the directory of the page index
-    page_index_path = os.path.join(volume_path_env, "index2/page_index")
-    # the directory of the index
-    index_path = os.path.join(volume_path_env, "index2")
-
-
-    # create the vector clients for this section of the crawl
-    image_client = pvs.VectorSearchClient2(os.path.join(index_path, "vector_index/image"))
-    text_client  = pvs.VectorSearchClient2(os.path.join(index_path, "vector_index/text" ))
-
-
+def generate_crawl_plan():
     # the path to the crawl plan file for the titles file. The crawl plan file details what sections have been crawled, and what sections need to be crawled
     crawl_plan_path = os.path.join(volume_path_env, "wikipedia/crawl_plans", titles_file_env.split(".")[0] + ".json")
+    
     if os.path.isfile(crawl_plan_path):
         logger.log(f"crawl plan file found at: {crawl_plan_path}")
         with open(crawl_plan_path, "r") as f:
@@ -339,7 +257,30 @@ if __name__ == "__main__" :
         # save the crawl plan
         with open(crawl_plan_path, "w") as f:
             json.dump(crawl_plan.__dict__, f)
+    
+    return crawl_plan
 
+
+if __name__ == "__main__" :
+
+    '''
+    
+        The goal of this script is to be able to crawl every title in the given titles file. The wikipedia crawler will be created and run repeatedly, until the process is finished. This way, in the likely event that the process is interupted, it can simply be restarted. Furthermore, the result of the crawl will be broken up into many files 
+    
+    '''
+
+    logger.log(f"using titles file: {titles_file_env}")
+
+    # the directory of the page index
+    page_index_path = os.path.join(volume_path_env, "index2/page_index")
+    # the directory of the index
+    index_path = os.path.join(volume_path_env, "index2")
+
+
+    
+
+
+    
 
     # Let's start crawling!
 

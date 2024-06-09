@@ -11,6 +11,8 @@ requests
 pydantic
 tqdm
 beautifulsoup4
+
 lxml
 tldextract
 cryptography
+sqlitedict

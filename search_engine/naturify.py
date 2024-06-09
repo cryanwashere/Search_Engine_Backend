@@ -1,4 +1,4 @@
-'''
+
 # Load iNaturalist model into memory
 iNat_state_dict = torch.load('/home/Server_2/model_state_dict_finished.pth', map_location=torch.device('cpu'))
 iNat_model = torchvision.models.vit_b_16()
@@ -41,4 +41,3 @@ def iNat_inference(inp):
             "score" : out.squeeze()[idx].item(),
         })
     return predictions
-'''
