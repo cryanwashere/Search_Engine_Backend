@@ -1,6 +1,6 @@
 '''
 
-    The purpose of this file is to contain functions that will be used to parse the web pages
+    The purpose of this file is to contain functions that will be used to parse the HTML content of web pages
 
 
 '''
@@ -10,12 +10,13 @@ import requests
 from urllib.parse import urljoin
 import re
 import time
+
 import os
 from io import BytesIO
 #from PIL import Image
 import sys
-sys.path.append('/home/sshfs_volume/Search_Engine_Backend')
-import search_engine.crawler.index_data_structure as index_data_structure
+from dataclasses import dataclass
+
 
 
 def extract_wiki_links(html_content):
@@ -142,65 +143,9 @@ def filter_text_tag(tag) -> bool:
         return False
 
     return True
-
-
-def extract_wiki_html(html_content, url) -> tuple:
-    '''
-
-        This function will take the html content for a wikipedia page. The function returns a tuple containing a list with links to all the images found desirable for the index, and a list with sections of text that are desirable for the index. 
-
-
-    '''
-
-
-    # the list of image urls that the function will return 
-    image_urls = list()
-
-    # the list of text segments desirable for the index that the function will return 
-    text_sections = list()
-
-    # parse HTML with beautifulsoup
-    soup = BeautifulSoup(html_content, 'html.parser')
-
-    # iterate through every image on the web page
-    for img_tag in soup.find_all('img'):
-        if 'src' in img_tag.attrs:
-
-            # use the filter_tag function to determine whether or no the image should part of the index
-            if not filter_image_tag(img_tag):
-                # this will print the url in red
-                #print(f"\033[41m {img_tag['src']} \033[0m")
-                continue
-            else:
-                # this will print the url normally
-                #print(img_tag['src'])
-                pass
-            
-            # get the url form the image's tag
-            image_url = img_tag['src']
-
-            # if the image_url is a relative url, make it an absolute url 
-            if not 'https://' in image_url:
-                image_url = urljoin(url, image_url)
-        
-            
-            image_urls.append(image_url)
-            #print(".",end='')
-    
-    # iterate through every section of text on the web page
-    for text_tag in soup.find_all('p'):
-
-        if not filter_text_tag(text_tag):
-            continue
-        text = text_tag.get_text()
-        text = remove_wiki_references(text)
-        #print(text)
-        text_sections.append(text)
-
-    return image_urls, text_sections
                 
                 
-def extract_html(html_content, url) -> dict:
+def extract_html(html_content, url) -> dict[str, object]:
     '''
     
         Takes in the HTML for a web page, and the web page's URL. It will then return a python dictionary containing all of the important data from the web page, to be stored in the page index. 
@@ -239,7 +184,6 @@ def extract_html(html_content, url) -> dict:
         
             
             image_urls.append(image_url)
-            #print(".",end='')
     
     # iterate through every section of text on the web page
     for text_tag in soup.find_all('p'):
@@ -251,15 +195,23 @@ def extract_html(html_content, url) -> dict:
         #print(text)
         text_sections.append(text)
 
-    
+    # determine if the page is a redirect
+    canonical = soup.find('link', {'rel': 'canonical'})
+    redirect = canonical['href'] != url
 
-    page_data = index_data_structure.PageIndexData(
-        page_url = url,
-        text_sections = text_sections, 
-        image_urls = image_urls, 
-        time_indexed = str(time.time())
+    return ParseResult(
+        page_dict = {
+        "page_url" : url,
+        "text_sections" : text_sections,
+        "image_urls" : image_urls,
+        "time_indexed" : str(time.time())
+        },
+        redirected = redirect
     )
 
-    return page_data
-                
-                
+
+
+@dataclass
+class ParseResult:
+    page_dict: dict
+    redirected: bool

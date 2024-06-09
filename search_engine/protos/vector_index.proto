@@ -1,0 +1,41 @@
+
+syntax = "proto3";
+
+service VectorIndex {
+    rpc Upsert (UpsertRequest) returns (UpsertResponse) {}
+    rpc Search (SearchRequest) returns (SearchResponse) {}
+}
+
+
+message VectorPayload {
+    int32 text_section_idx = 1;
+    string image_url = 2;
+    string page_url = 3;
+}
+ 
+
+message UpsertRequest {
+    VectorPayload payload = 1;
+
+    // bytes from the numpy array
+    // array.tobytes()
+    bytes nparray_bytes = 2;
+}
+
+message UpsertResponse {
+    string status = 1;
+} 
+
+
+message SearchRequest {
+    bytes nparray_bytes = 1;
+}
+
+message SearchResponse {
+    repeated SearchResult results = 1; 
+}
+
+message SearchResult {
+    VectorPayload payload = 1; 
+    float score = 2; 
+}

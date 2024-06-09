@@ -1,0 +1,11 @@
+
+
+services: 
+  sample_model:
+    build: ./vector_index_container
+    command: python3 vector_index_service.py
+    environment: 
+      - VECTOR_INDEX_NAME=sample
+    volumes:
+      ~/Search_Engine:/project-dir
+    
