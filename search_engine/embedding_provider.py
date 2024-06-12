@@ -14,7 +14,7 @@ class EmbeddingProvider:
     Parameters: 
         model_name: the name of the model that is being used
         vector_index_path: the path to the root directory of the vector index.
-
+ 
 
     Public Methods: 
         generate_embeddings_and_upsert:
@@ -70,7 +70,7 @@ class EmbeddingProvider:
             )
 
             upsert_status = self.image_index.upsert(image_features, payload)
-            self.logger.log(f"\t({i}) upserted image {image_url_list[i][-50:]} status: {upsert_status}")
+            self.logger.log(f"\t({i}) upserted image embedding {image_url_list[i][-50:]} status: {upsert_status}")
 
 
 

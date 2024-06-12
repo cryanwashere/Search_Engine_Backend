@@ -55,4 +55,5 @@ for (start, end) in crawl_sections:
 
 with open('/home/cameron/Search_Engine/container_management/wikipedia_v1-sections.txt','a') as f:
     for section in crawl_sections:
+        f.write("\n")
         f.write(str(section[-1]) + "\n")

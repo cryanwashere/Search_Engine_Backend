@@ -4,8 +4,9 @@ import vector_index_pb2_grpc
 import numpy as np
 import vector_index
 from typing import List
-import port_map
 import custom_logger
+import index_network_config
+
 
 class VectorIndexClient:
     '''
@@ -19,11 +20,13 @@ class VectorIndexClient:
         self.logger.verbose = True
 
 
-        port = port_map._map[model_name]
+        port = index_network_config.port_map[model_name]
+        
+        # on the index network, the domain name for vector index server is the model whose embeddings it serves
+        service_route = f'{model_name}_service:{port}'
+        self.logger.log(f"initializing client for service: {service_route}")
 
-        self.logger.log(f"running on port: {port}")
-
-        self.channel = grpc.insecure_channel('localhost:{port}')
+        self.channel = grpc.insecure_channel(service_route)
         self.stub = vector_index_pb2_grpc.VectorIndexStub(self.channel)
     
     def upsert(self, vector: np.array, payload: vector_index.VectorPayload):
@@ -52,9 +55,10 @@ class VectorIndexClient:
 
         print(search_response)
 
-
+ 
 if __name__ == "__main__":
-    client = VectorIndexClient()
+
+    client = VectorIndexClient("sample")
 
     sample_vector = np.random.randn(128).astype(np.float32)
 
@@ -63,5 +67,5 @@ if __name__ == "__main__":
         image_url="image",
         page_url="some page"
     )
-
-    client.search(sample_vector)
+    client.upsert(sample_vector, sample_payload)
+    #client.search(sample_vector)

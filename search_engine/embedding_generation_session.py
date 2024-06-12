@@ -2,28 +2,33 @@ import custom_logger
 import page_index
 import embedding_provider
 import crawl_plan
+import os
 
 class EmbeddingGenerationSession:
     '''
         The purpose of this class is to manage generating embeddings for a section of content from the crawl plan.
 
+
+
+
         Paramters:
             page_index_path: the path to the root directory of the page index
+            vector_index_path: the path to the root directory of the vector index
             crawl_plan_db_path: the path to the crawl plan database (SqliteDict) that contains the crawl plan
             embed_instruction: a string representing which subset of urls in the crawl plan database to generate embeddings for. This string is of the format: {crawl_start}-{crawl_end}
             model_str: a string representation for the model being used
     '''
     
-    def __init__(self, page_index_path: str, crawl_plan_db_path: str, embed_instruction: str, model_str: str):
+    def __init__(self, page_index_path: str, vector_index_path: str, crawl_plan_db_path: str, embed_instruction: str, model_str: str):
         
         self.logger = custom_logger.Logger("EmbeddingGenerationSession")
+        self.logger.verbose = True
         
         # the embedding instruction is passed to the EmbeddingGenerationSession in the same format as the crawl instruction. 
-        self.embed_start, self.embed_end = parse_crawl_instruction(embed_instruction)
-        
+        self.start, self.end = parse_crawl_instruction(embed_instruction)
         
         # the EmbeddingProvider object will generate the embeddings, and will access the page index through a reference
-        self.embedding_provider = embedding_provider.EmbeddingProvider(model_str)
+        self.embedding_provider = embedding_provider.EmbeddingProvider(model_str, vector_index_path)
         
         # manage the page index
         self.page_index_client = page_index.PageIndexClient(page_index_path)
@@ -44,14 +49,8 @@ class EmbeddingGenerationSession:
 
             # data is obtained through a reference to the page index client
             self.embedding_provider.generate_embeddings_and_upsert(url, self.page_index_client)
-        
-        
 
-
-
-
-
-def parse_crawl_instruction(self, crawl_instruction):
+def parse_crawl_instruction(crawl_instruction):
     crawl_instruction = crawl_instruction.split('-')
     start, end = crawl_instruction[0], crawl_instruction[1]
     start, end = int(start), int(end)
@@ -66,7 +65,9 @@ if __name__ == "__main__":
 
         EMBED_INSTRUCTION: a string of the format: "(embed start)-(embed end)" 
 
-        PAGE_INDEX_PATH: the path to the page index where the crawled data is stored    
+        PAGE_INDEX_PATH: the path to the page index where the crawled data is stored   
+
+        VECTOR_INDEX_PATH: the path to the vector index of the project 
         
         MODEL_STR: a string representing the embedding model to be used
 
@@ -80,16 +81,19 @@ if __name__ == "__main__":
     # path to the page index
     page_index_path = os.environ['PAGE_INDEX_PATH']
 
+    # path to the vector index
+    vector_index_path = os.environ['VECTOR_INDEX_PATH']
+
     model_str = os.environ['MODEL_STR']
 
-    print(f"INITIALIZING EMBEDDING GENERATION SESSION:\n CRAWL_PLAN_DB_PATH: {crawl_plan_db_path}\n EMBED_INSTRUCTION: {embed_instruction}\n PAGE_INDEX_PATH: {page_index_path}\n MODEL_STR: {model_str}")
+    print(f"INITIALIZING EMBEDDING GENERATION SESSION:\n CRAWL_PLAN_DB_PATH: {crawl_plan_db_path}\n EMBED_INSTRUCTION: {embed_instruction}\n PAGE_INDEX_PATH: {page_index_path}\n VECTOR_INDEX_PATH: {vector_index_path}\n MODEL_STR: {model_str}")
 
-    embedding_generation_session = EmbeddingGenerationSession(page_index_path=page_index_path, crawl_plan_db_path=crawl_plan_db_path, embed_instruction=embed_instruction, model_str=model_str)
+    embedding_generation_session = EmbeddingGenerationSession(page_index_path=page_index_path, vector_index_path=vector_index_path, crawl_plan_db_path=crawl_plan_db_path, embed_instruction=embed_instruction, model_str=model_str)
 
     embedding_generation_session.generate()
 
 
-
+ 
 
 
 
