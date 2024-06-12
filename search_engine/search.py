@@ -1,5 +1,6 @@
 import python_vector_search as pvs
 import search.dictionary_search as di
+from PIL import Image
 
 class SearchEngineClient:
     '''
@@ -8,11 +9,16 @@ class SearchEngineClient:
     
     '''
     def __init__(self, 
-
-            image_vector_client_path, 
-            text_vector_client_path, 
-            page_lookup_client_path
-
+            vector_index_path,
+            page_index_path,
         ):
-        
-      pass
+
+        self.vector_index_path = vector_index_path
+        self.page_index_path = page_index_path
+
+        # 
+    
+    def search_image(self, image: Image):
+        pass
+    def search_text(self, text: str):
+        pass

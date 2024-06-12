@@ -50,12 +50,20 @@ class EmbeddingProvider:
     def open_clip(self, page_url: str, page_index_client: page_index.PageIndexClient):
         self.logger.log(f"generating embeddings for images in {page_url}")
 
-        # load the page data and the images from the page index client
-        page_data, image_url_list, image_list = page_index_client.retrieve_page_and_images(page_url)
-        
+        try:
+            # load the page data and the images from the page index client
+            page_data, image_url_list, image_list = page_index_client.retrieve_page_and_images(page_url)
+        except Exception as e:
+            self.logger.error(f"failed to load page data for {page_url} with error: {e}")
+            return
+            
         for i, image in enumerate(image_list): 
-            # preprocess the image for the CLIP model
-            image = self.preprocess(image).unsqueeze(0)
+            try: 
+                # preprocess the image for the CLIP model
+                image = self.preprocess(image).unsqueeze(0)
+            except Exception as e: 
+                self.logger.error(f"failed to process image at url: {image_url_list[i]} with error: {e}")
+                continue
 
             # inference the model on the image
             with torch.no_grad():
