@@ -23,5 +23,8 @@ ENV PYTHONPYCACHEPREFIX=/vector-index-service
 # the path to the root directory of the vector index
 ENV VECTOR_INDEX_PATH=/project-dir/index_v1/vector_index
 
+# make python immediately log stdout
+ENV PYTHONUNBUFFERED 1
+
 
 CMD ["python3","/project-dir/Search_Engine_Backend/search_engine/vector_index_service.py"] 

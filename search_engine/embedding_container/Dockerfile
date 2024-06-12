@@ -2,17 +2,27 @@ FROM python:3.9-slim
 
 WORKDIR /docker-embeddings
 
+# Install Git
+RUN apt-get update && \
+    apt-get install -y git && \
+    rm -rf /var/lib/apt/lists/*
+
+
+
+
+
+
 # install CPU-only pytorch
 RUN pip3 install torch==1.11.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-#RUN pip3 install open_clip_torch
 RUN pip3 install -U sentence-transformers
-
+RUN pip3 install transformers
 
 # special command to install gRPC
 RUN python -m pip install grpcio
 
-COPY embedding_generation_requirements.txt . 
-RUN pip install -r embedding_generation_requirements.txt
+
+COPY embedding_requirements.txt . 
+RUN pip install -r embedding_requirements.txt
 
 
 # create a volume where the project directory is

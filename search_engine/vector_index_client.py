@@ -4,6 +4,8 @@ import vector_index_pb2_grpc
 import numpy as np
 import vector_index
 from typing import List
+import port_map
+import custom_logger
 
 class VectorIndexClient:
     '''
@@ -12,8 +14,16 @@ class VectorIndexClient:
     
     '''
 
-    def __init__(self):
-        self.channel = grpc.insecure_channel('localhost:50000')
+    def __init__(self, model_name):
+        self.logger = custom_logger.Logger(f"VectorIndexClient[{model_name}]")
+        self.logger.verbose = True
+
+
+        port = port_map._map[model_name]
+
+        self.logger.log(f"running on port: {port}")
+
+        self.channel = grpc.insecure_channel('localhost:{port}')
         self.stub = vector_index_pb2_grpc.VectorIndexStub(self.channel)
     
     def upsert(self, vector: np.array, payload: vector_index.VectorPayload):

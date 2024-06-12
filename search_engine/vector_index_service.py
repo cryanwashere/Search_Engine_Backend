@@ -71,7 +71,7 @@ def serve(vector_index_path):
     vector_index_service = VectorIndexService(vector_index_path)
     print(f"opened vector index at: {vector_index_path}")
     print(f"vector index has {vector_index_service.index.ngt_index.get_num_of_objects()} points")
-    vector_index_pb2_grpc.add_VectorIndexServicer_to_server(vector_index_service,server)
+    vector_index_pb2_grpc.add_VectorIndexServicer_to_server(vector_index_service, server)
 
 
     # This runs in a container, so it will always serve on the same port. This is not what the port will be outside the container! The server's port is specified when the container is run, and will be forwarded to this port inside the container.

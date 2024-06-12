@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import dataclasses
 from typing import List, Tuple
 import uuid
-import tldextract
+#import tldextract
 import hashlib
 import string
 import os
@@ -209,7 +209,7 @@ class PageIndexClient:
         '''
 
         # get the page data
-        page_data = self.retreive_page_data(page_url)
+        page_data = self.retrieve_page_data(page_url)
 
         # for each of the images in the page, load the image
         image_list = list()
@@ -232,19 +232,22 @@ if __name__ == "__main__":
     import sys
 
     command = sys.argv[1]
-
-    #match command: 
-    #    case "find_path":
-    #        print(f"path for {sys.argv[2]}:")
-    #        print(page_index_client.page_url_path(sys.argv[2]))
-    #    case "show_page":
-    #        print(f"showing page data for: {sys.argv[2]}")
-    #        print(page_index_client.retrieve_page_data(sys.argv[2]))
-    #    case "text":
-    #        print(f"showing text sections for: {sys.argv[2]}")
-    #        page_data = page_index_client.retrieve_page_data(sys.argv[2])
-    #        for text_section in page_data.text_sections:
-    #            print(text_section)
-    #            print()
+ 
+    if command == "find_path":
+        print(f"path for {sys.argv[2]}:")
+        print(page_index_client.page_url_path(sys.argv[2]))
+    elif command == "show_page":
+        print(f"showing page data for: {sys.argv[2]}")
+        print(page_index_client.retrieve_page_data(sys.argv[2]))
+    elif command == "text":
+        print(f"showing text sections for: {sys.argv[2]}")
+        page_data = page_index_client.retrieve_page_data(sys.argv[2])
+        for text_section in page_data.text_sections:
+            print(text_section)
+            print()
+    elif command == "images":
+        page_data = page_index_client.retrieve_page_data(sys.argv[2])
+        for image_url in page_data.image_urls:
+            print(image_url)
 
     #print(page_index_client.retrieve_page_data('https://en.wikipedia.org/wiki/!!!'))

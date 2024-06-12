@@ -133,8 +133,7 @@ class VectorIndex:
 if __name__ == "__main__":
     
     
-    match sys.argv[1]:
-        case "create":
+    if sys.argv[1] == "create":
             new_index_name = sys.argv[2]
             new_index_dim = int(sys.argv[3])
             new_index_distance_type = sys.argv[4]
