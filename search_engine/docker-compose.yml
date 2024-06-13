@@ -39,7 +39,7 @@ services:
       - index_network
     environment: 
       - CRAWL_PLAN_DB_PATH=/project-dir/crawl_plans/wikipedia_v1.sqlite
-      - EMBED_INSTRUCTION=122-150
+      - EMBED_INSTRUCTION=150-200
       - PAGE_INDEX_PATH=/project-dir/index_v1/page_index
       - VECTOR_INDEX_PATH=/project-dir/index_v1/vector_index
       - MODEL_STR=open_clip

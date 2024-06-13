@@ -14,25 +14,29 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12vector_index.proto\"N\n\rVectorPayload\x12\x18\n\x10text_section_idx\x18\x01 \x01(\x05\x12\x11\n\timage_url\x18\x02 \x01(\t\x12\x10\n\x08page_url\x18\x03 \x01(\t\"G\n\rUpsertRequest\x12\x1f\n\x07payload\x18\x01 \x01(\x0b\x32\x0e.VectorPayload\x12\x15\n\rnparray_bytes\x18\x02 \x01(\x0c\" \n\x0eUpsertResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\"&\n\rSearchRequest\x12\x15\n\rnparray_bytes\x18\x01 \x01(\x0c\"0\n\x0eSearchResponse\x12\x1e\n\x07results\x18\x01 \x03(\x0b\x32\r.SearchResult\">\n\x0cSearchResult\x12\x1f\n\x07payload\x18\x01 \x01(\x0b\x32\x0e.VectorPayload\x12\r\n\x05score\x18\x02 \x01(\x02\x32g\n\x0bVectorIndex\x12+\n\x06Upsert\x12\x0e.UpsertRequest\x1a\x0f.UpsertResponse\"\x00\x12+\n\x06Search\x12\x0e.SearchRequest\x1a\x0f.SearchResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12vector_index.proto\"$\n\x11\x43heckpointRequest\x12\x0f\n\x07request\x18\x01 \x01(\t\"&\n\x12\x43heckpointResponse\x12\x10\n\x08response\x18\x01 \x01(\t\"N\n\rVectorPayload\x12\x18\n\x10text_section_idx\x18\x01 \x01(\x05\x12\x11\n\timage_url\x18\x02 \x01(\t\x12\x10\n\x08page_url\x18\x03 \x01(\t\"G\n\rUpsertRequest\x12\x1f\n\x07payload\x18\x01 \x01(\x0b\x32\x0e.VectorPayload\x12\x15\n\rnparray_bytes\x18\x02 \x01(\x0c\" \n\x0eUpsertResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\"&\n\rSearchRequest\x12\x15\n\rnparray_bytes\x18\x01 \x01(\x0c\"0\n\x0eSearchResponse\x12\x1e\n\x07results\x18\x01 \x03(\x0b\x32\r.SearchResult\">\n\x0cSearchResult\x12\x1f\n\x07payload\x18\x01 \x01(\x0b\x32\x0e.VectorPayload\x12\r\n\x05score\x18\x02 \x01(\x02\x32\xa0\x01\n\x0bVectorIndex\x12+\n\x06Upsert\x12\x0e.UpsertRequest\x1a\x0f.UpsertResponse\"\x00\x12+\n\x06Search\x12\x0e.SearchRequest\x1a\x0f.SearchResponse\"\x00\x12\x37\n\nCheckpoint\x12\x12.CheckpointRequest\x1a\x13.CheckpointResponse\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'vector_index_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_VECTORPAYLOAD']._serialized_start=22
-  _globals['_VECTORPAYLOAD']._serialized_end=100
-  _globals['_UPSERTREQUEST']._serialized_start=102
-  _globals['_UPSERTREQUEST']._serialized_end=173
-  _globals['_UPSERTRESPONSE']._serialized_start=175
-  _globals['_UPSERTRESPONSE']._serialized_end=207
-  _globals['_SEARCHREQUEST']._serialized_start=209
-  _globals['_SEARCHREQUEST']._serialized_end=247
-  _globals['_SEARCHRESPONSE']._serialized_start=249
-  _globals['_SEARCHRESPONSE']._serialized_end=297
-  _globals['_SEARCHRESULT']._serialized_start=299
-  _globals['_SEARCHRESULT']._serialized_end=361
-  _globals['_VECTORINDEX']._serialized_start=363
-  _globals['_VECTORINDEX']._serialized_end=466
+  _globals['_CHECKPOINTREQUEST']._serialized_start=22
+  _globals['_CHECKPOINTREQUEST']._serialized_end=58
+  _globals['_CHECKPOINTRESPONSE']._serialized_start=60
+  _globals['_CHECKPOINTRESPONSE']._serialized_end=98
+  _globals['_VECTORPAYLOAD']._serialized_start=100
+  _globals['_VECTORPAYLOAD']._serialized_end=178
+  _globals['_UPSERTREQUEST']._serialized_start=180
+  _globals['_UPSERTREQUEST']._serialized_end=251
+  _globals['_UPSERTRESPONSE']._serialized_start=253
+  _globals['_UPSERTRESPONSE']._serialized_end=285
+  _globals['_SEARCHREQUEST']._serialized_start=287
+  _globals['_SEARCHREQUEST']._serialized_end=325
+  _globals['_SEARCHRESPONSE']._serialized_start=327
+  _globals['_SEARCHRESPONSE']._serialized_end=375
+  _globals['_SEARCHRESULT']._serialized_start=377
+  _globals['_SEARCHRESULT']._serialized_end=439
+  _globals['_VECTORINDEX']._serialized_start=442
+  _globals['_VECTORINDEX']._serialized_end=602
 # @@protoc_insertion_point(module_scope)

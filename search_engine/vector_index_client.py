@@ -54,18 +54,40 @@ class VectorIndexClient:
         search_response = self.stub.Search(search_request_proto)
 
         print(search_response)
+    
+    def checkpoint(self):
+        checkpoint_request_proto = vector_index_pb2.CheckpointRequest(request="")
+        checkpoint_response = self.stub.Checkpoint(checkpoint_request_proto)
+        print(f"checkpoint status: {checkpoint_response}")
 
  
 if __name__ == "__main__":
 
-    client = VectorIndexClient("sample")
+    import argparse
 
-    sample_vector = np.random.randn(128).astype(np.float32)
-
-    sample_payload = vector_index.VectorPayload(
-        text_section_idx=-1,
-        image_url="image",
-        page_url="some page"
+    parser = argparse.ArgumentParser(
+        prog='VectorIndexClient',
+        description='perform various functions with a vector index client'
     )
-    client.upsert(sample_vector, sample_payload)
-    #client.search(sample_vector)
+    parser.add_argument(
+        'command',
+        choices=['sample_test', 'search']
+    )
+    args = parser.parse_args()
+    
+    if args.command == "sample_test":
+        client = VectorIndexClient("sample")
+
+        sample_vector = np.random.randn(128).astype(np.float32)
+
+        sample_payload = vector_index.VectorPayload(
+            text_section_idx=-1,
+            image_url="image",
+            page_url="some page"
+        )
+        client.upsert(sample_vector, sample_payload)
+
+        client.checkpoint()
+    elif args.command == "search":
+
+    

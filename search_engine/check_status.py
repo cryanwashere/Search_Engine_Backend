@@ -8,6 +8,7 @@ for container in docker_client.containers.list():
     container_id = container.id
     container_name = container.name
 
+    if not "crawler" in container_name : continue
     container_crawl_start, container_crawl_end = int(container_name.split("_")[-2]), int(container_name.split("_")[-1])
     
     container_logs = str(container.logs())

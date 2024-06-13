@@ -6,8 +6,11 @@ import numpy as np
 import open_clip
 import vector_index_client
 import vector_index
+from PIL import Image
+
 
 class EmbeddingProvider:
+
     '''
     This class will be used to generate embeddings. It is initialized with the name of a specific model, and it will load that model for use. 
 
@@ -28,10 +31,11 @@ class EmbeddingProvider:
         self.logger = custom_logger.Logger("EmbeddingProvider")
         self.logger.verbose = True
         
-        
+        # here models will be loaded based on which model has been selected. this makes it easy to standardize the usage of different models
         if model_name == "open_clip":
             self.open_clip_init(vector_index_path)
             self.generate_embeddings_and_upsert = self.open_clip
+            self.checkpoint = self.open_clip_checkpoint
             
     
     def open_clip_init(self, vector_index_path: str):
@@ -44,7 +48,25 @@ class EmbeddingProvider:
         self.image_index = vector_index_client.VectorIndexClient("open_clip_image")
         self.text_index = vector_index_client.VectorIndexClient("open_clip_text")
         self.logger.log("opened vector index clients")
+    
+    def open_clip_checkpoint(self):
+        self.image_index.checkpoint()
 
+    def open_clip_embed_image(self, image: Image) -> np.array:
+        ''' Generate a feature vector for an image, with the Open Clip model '''
+        try: 
+            # preprocess the image for the CLIP model
+            image = self.preprocess(image).unsqueeze(0)
+        except Exception as e: 
+            self.logger.error(f"failed to process image with error: {e}")
+            return None 
+
+        # inference the model on the image
+        with torch.no_grad():
+            image_features = np.array(self.model.encode_image(image).squeeze())
+
+        return image_features
+        
 
 
     def open_clip(self, page_url: str, page_index_client: page_index.PageIndexClient):
@@ -58,16 +80,11 @@ class EmbeddingProvider:
             return
             
         for i, image in enumerate(image_list): 
-            try: 
-                # preprocess the image for the CLIP model
-                image = self.preprocess(image).unsqueeze(0)
-            except Exception as e: 
-                self.logger.error(f"failed to process image at url: {image_url_list[i]} with error: {e}")
-                continue
 
-            # inference the model on the image
-            with torch.no_grad():
-                image_features = np.array(self.model.encode_image(image).squeeze())
+            image_features = self.open_clip_embed_image(image)
+
+            # ensure that the image embeddings were successful
+            if image_features is None : continue
             
             assert image_features.dtype == np.float32
 

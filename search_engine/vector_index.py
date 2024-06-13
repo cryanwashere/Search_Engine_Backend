@@ -115,16 +115,12 @@ class VectorIndex:
         self.ngt_index.save()
         self.id_map_db.commit()
     
-    def save(self):
-        self.ngt_index.save()
-    
     def close(self):
         self.ngt_index.close()
         self.id_map_db.close()
 
     def finish(self):
         self.checkpoint()
-        self.save()
         self.close()
 
 

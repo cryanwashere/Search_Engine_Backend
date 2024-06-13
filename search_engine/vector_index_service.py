@@ -63,7 +63,12 @@ class VectorIndexService(vector_index_pb2_grpc.VectorIndexServicer):
 
         except Exception as e:
             print(e)
-            
+    
+    def Checkpoint(self, request, context):
+        # build the NGT index, and save it
+        self.index.checkpoint()
+        print(f"checkpoint complete")
+        return vector_index_pb2.CheckpointResponse(response="checkpoint complete")
     
 
 def serve(vector_index_path, model_name):

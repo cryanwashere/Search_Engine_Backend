@@ -5,6 +5,18 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
+class CheckpointRequest(_message.Message):
+    __slots__ = ("request",)
+    REQUEST_FIELD_NUMBER: _ClassVar[int]
+    request: str
+    def __init__(self, request: _Optional[str] = ...) -> None: ...
+
+class CheckpointResponse(_message.Message):
+    __slots__ = ("response",)
+    RESPONSE_FIELD_NUMBER: _ClassVar[int]
+    response: str
+    def __init__(self, response: _Optional[str] = ...) -> None: ...
+
 class VectorPayload(_message.Message):
     __slots__ = ("text_section_idx", "image_url", "page_url")
     TEXT_SECTION_IDX_FIELD_NUMBER: _ClassVar[int]

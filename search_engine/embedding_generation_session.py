@@ -49,6 +49,9 @@ class EmbeddingGenerationSession:
 
             # data is obtained through a reference to the page index client
             self.embedding_provider.generate_embeddings_and_upsert(url, self.page_index_client)
+        
+        # now that we are done, we want to checkpoint the vector index to save our progress
+        self.embedding_provider.checkpoint()
 
 def parse_crawl_instruction(crawl_instruction):
     crawl_instruction = crawl_instruction.split('-')
