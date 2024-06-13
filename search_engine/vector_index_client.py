@@ -15,7 +15,7 @@ class VectorIndexClient:
     
     '''
 
-    def __init__(self, model_name):
+    def __init__(self, model_name, hostname=None):
         self.logger = custom_logger.Logger(f"VectorIndexClient[{model_name}]")
         self.logger.verbose = True
 
@@ -23,7 +23,7 @@ class VectorIndexClient:
         port = index_network_config.port_map[model_name]
         
         # on the index network, the domain name for vector index server is the model whose embeddings it serves
-        service_route = f'{model_name}_service:{port}'
+        service_route = f'{model_name}_service:{port}' if hostname is None else f'{hostname}:{port}'
         self.logger.log(f"initializing client for service: {service_route}")
 
         self.channel = grpc.insecure_channel(service_route)
@@ -88,6 +88,16 @@ if __name__ == "__main__":
         client.upsert(sample_vector, sample_payload)
 
         client.checkpoint()
-    elif args.command == "search":
 
-    
+    elif args.command == "search":
+        client = VectorIndexClient('open_clip_image', hostname='localhost')
+        
+        from PIL import Image 
+        image = Image.open('/home/cameron/Search_Engine/flower.jpg')
+
+        import embedding_provider
+        provider = embedding_provider.EmbeddingProvider("open_clip")
+
+        image_embedding = provider.open_clip_embed_image(image).astype(np.float32)
+
+        client.search(image_embedding)

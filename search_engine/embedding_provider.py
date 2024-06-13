@@ -24,21 +24,20 @@ class EmbeddingProvider:
             given the way that the EmbeddingProvider has been initialized, create generate embeddings for whatever page content the models use, and then upsert them to their vector clients. 
     '''
 
-    def __init__(self, model_name, vector_index_path):
+    def __init__(self, model_name):
         self.model_name = model_name
-        self.vector_index_path = vector_index_path
 
         self.logger = custom_logger.Logger("EmbeddingProvider")
         self.logger.verbose = True
         
         # here models will be loaded based on which model has been selected. this makes it easy to standardize the usage of different models
         if model_name == "open_clip":
-            self.open_clip_init(vector_index_path)
+            self.open_clip_init()
             self.generate_embeddings_and_upsert = self.open_clip
             self.checkpoint = self.open_clip_checkpoint
             
     
-    def open_clip_init(self, vector_index_path: str):
+    def open_clip_init(self):
         # load the CLIP models to encode image or text features
         self.model, _, self.preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
         self.tokenizer = open_clip.get_tokenizer('ViT-B-32')
@@ -101,7 +100,7 @@ class EmbeddingProvider:
 
 # testing     
 if __name__ == "__main__":
-    embedding_provider = EmbeddingProvider("open_clip","/project-dir/index_v1/vector_index")
+    embedding_provider = EmbeddingProvider("open_clip")
 
     page_index_client = page_index.PageIndexClient("/project-dir/index_v1/page_index")
 

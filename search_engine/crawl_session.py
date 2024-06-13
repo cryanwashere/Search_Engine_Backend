@@ -3,6 +3,7 @@ import request_client
 import page_index
 import crawl_plan
 import custom_logger
+import time
 
 class CrawlSession: 
     '''
@@ -10,7 +11,10 @@ class CrawlSession:
         This object will orchestrate a single crawling process. It is meant to be run in a container, where it will will be initialized, and run. All of the parameters for a crawl session are meant to come from environment variables
 
     '''
-    def __init__(self, crawl_plan_db_path, crawl_instruction, page_index_path):
+    def __init__(self, crawl_plan_db_path: str, crawl_instruction: str, page_index_path: str, politeness: bool=False):
+
+        # whether or not to be polite to the hosts
+        self.politeness = politeness
 
         # manage HTTP requests
         self.request_client = request_client.RequestClient()
@@ -61,7 +65,7 @@ class CrawlSession:
         for image_url in page_data.image_urls:
             
             # request the bytes for the image 
-            self.logger.log(f"\t getting image bytes for {image_url[-100:]}")
+            self.logger.log(f"\t getting image bytes for {image_url[-50:]}")
             image_bytes = self.request_client.load_image_bytes(image_url)
 
             if image_bytes != None: 
@@ -71,6 +75,8 @@ class CrawlSession:
     
     def crawl(self):
         for i in range(self.start, self.end):
+            if self.politeness:
+                time.sleep(2)
             self.logger.log(f"Crawling url {i}")
             #print(f"{i}/{self.end}")
             url = self.crawl_plan_client.read_url(i)
@@ -88,6 +94,8 @@ if __name__ == "__main__":
 
             PAGE_INDEX_PATH: the path to the page index where the crawled data is stored
 
+            POLITENESS: whether or not to be polite to the hosts
+
     '''
 
     # the path to the crawl plan database
@@ -99,8 +107,10 @@ if __name__ == "__main__":
     # path to the page index
     page_index_path = os.environ['PAGE_INDEX_PATH']
 
-    print(f"INITIALIZING CRAWL SESSION:\n CRAWL_PLAN_DB_PATH: {crawl_plan_db_path}\n CRAWL_INSTRUCTION: {crawl_instruction}\n PAGE_INDEX_PATH: {page_index_path}")
+    politeness = bool(os.environ['POLITENESS'])
 
-    crawl_session = CrawlSession(crawl_plan_db_path, crawl_instruction, page_index_path)
+    print(f"INITIALIZING CRAWL SESSION:\n CRAWL_PLAN_DB_PATH: {crawl_plan_db_path}\n CRAWL_INSTRUCTION: {crawl_instruction}\n PAGE_INDEX_PATH: {page_index_path}\n POLITENESS: {politeness}")
+
+    crawl_session = CrawlSession(crawl_plan_db_path, crawl_instruction, page_index_path, politeness=politeness)
 
     crawl_session.crawl()

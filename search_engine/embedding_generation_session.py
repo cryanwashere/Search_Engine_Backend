@@ -28,7 +28,7 @@ class EmbeddingGenerationSession:
         self.start, self.end = parse_crawl_instruction(embed_instruction)
         
         # the EmbeddingProvider object will generate the embeddings, and will access the page index through a reference
-        self.embedding_provider = embedding_provider.EmbeddingProvider(model_str, vector_index_path)
+        self.embedding_provider = embedding_provider.EmbeddingProvider(model_str)
         
         # manage the page index
         self.page_index_client = page_index.PageIndexClient(page_index_path)
