@@ -4,6 +4,7 @@ import page_index
 import crawl_plan
 import custom_logger
 import time
+import yaml
 
 class CrawlSession: 
     '''
@@ -26,6 +27,7 @@ class CrawlSession:
         self.page_index_client = page_index.PageIndexClient(page_index_path)
 
 
+        self.crawl_instruction = crawl_instruction
         self.start, self.end = self.parse_crawl_instruction(crawl_instruction)
 
 
@@ -81,6 +83,21 @@ class CrawlSession:
             #print(f"{i}/{self.end}")
             url = self.crawl_plan_client.read_url(i)
             self.process_page(url)
+        
+        # now that crawling has been finished, put an entry in the management file, indicating that the given section has been completed
+        log_crawl_session("/project-dir/se-management/wikipedia_v1-sections.yml",self.crawl_instruction)
+
+def log_crawl_session(se_management_path, crawl_instruction):
+    with open(se_management_path,'r') as f:
+        se_management = yaml.safe_load(f)
+    
+
+    se_management['Crawled Sections'].append(crawl_instruction)
+
+    print(f"{se_management}")
+
+    with open(se_management_path,'w') as f:
+        yaml.dump(se_management, f)
 
 
 if __name__ == "__main__":

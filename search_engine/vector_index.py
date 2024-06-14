@@ -41,6 +41,9 @@ class SearchResult:
     payload : VectorPayload
     score : float
 
+    def dict(self):
+        return dataclasses.asdict(self)
+
 
 
 

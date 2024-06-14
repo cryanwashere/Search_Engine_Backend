@@ -1,16 +1,46 @@
 
 
 services: 
-
   crawler:
     image: crawling_container
     container_name: crawler
     command: python3 /project-dir/Search_Engine_Backend/search_engine/crawl_session.py
     environment:
-      - CRAWL_INSTRUCTION=1149-2000
+      - CRAWL_INSTRUCTION=10000-20000
       - POLITENESS=True
     volumes:
       - ~/Search_Engine:/project-dir
+    
+  crawler_2:
+    image: crawling_container
+    container_name: crawler-2
+    command: python3 /project-dir/Search_Engine_Backend/search_engine/crawl_session.py
+    environment:
+      - CRAWL_INSTRUCTION=20030-40000
+      - POLITENESS=True
+    volumes:
+      - ~/Search_Engine:/project-dir
+
+  crawler_3:
+    image: crawling_container
+    container_name: crawler-3
+    command: python3 /project-dir/Search_Engine_Backend/search_engine/crawl_session.py
+    environment:
+      - CRAWL_INSTRUCTION=40000-60000
+      - POLITENESS=True
+    volumes:
+      - ~/Search_Engine:/project-dir
+  
+  crawler_4:
+    image: crawling_container
+    container_name: crawler-4
+    command: python3 /project-dir/Search_Engine_Backend/search_engine/crawl_session.py
+    environment:
+      - CRAWL_INSTRUCTION=60000-80000
+      - POLITENESS=True
+    volumes:
+      - ~/Search_Engine:/project-dir
+  
 
 
   sample_service:
@@ -44,6 +74,7 @@ services:
 
   open_clip_embeddings:
     image: embedding_container
+    container_name: open-clip-embeddings
     command: python3 /project-dir/Search_Engine_Backend/search_engine/embedding_generation_session.py
     volumes:
       - ~/Search_Engine:/project-dir
@@ -51,7 +82,7 @@ services:
       - index_network
     environment: 
       - CRAWL_PLAN_DB_PATH=/project-dir/crawl_plans/wikipedia_v1.sqlite
-      - EMBED_INSTRUCTION=300-1000
+      - EMBED_INSTRUCTION=5000-10000
       - PAGE_INDEX_PATH=/project-dir/index_v1/page_index
       - VECTOR_INDEX_PATH=/project-dir/index_v1/vector_index
       - MODEL_STR=open_clip

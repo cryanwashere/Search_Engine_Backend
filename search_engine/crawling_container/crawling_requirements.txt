@@ -4,3 +4,4 @@ requests
 sqlitedict
 Pillow
 tldextract
+pyyaml

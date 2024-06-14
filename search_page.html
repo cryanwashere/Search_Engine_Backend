@@ -156,20 +156,11 @@ h1 {
                     console.log("recieved api response: ");
                     console.log(data);
 
-                    // display each of the images
-                    //data.search_result.forEach(e => {
-                    //    if (e.type == "image") {
-                    //        let image_tag = "<img src='" + e.image_source + "'>";
-                    //        document.getElementById("result_images").innerHTML += image_tag;
-                    //    }
-                    //});
+                   
                     createImageGallery(data.search_result)
-                    console.log("created image gallery")
+           
 
-                    // display the naturify predictions
-                    data.nat_predictions.forEach(e => {
-                        document.getElementById("naturify_classes").innerHTML += e.species.common_name + " " + e.score + " <br>";
-                    });
+                   
                     
                 })
                 .catch(error => {
@@ -181,24 +172,26 @@ h1 {
         }
 
 
-        function createImageGallery(imageUrls) {
+        function createImageGallery(searchResults) {
             const imageContainer = document.getElementById("results");
             //imageContainer.innerHTML = ""; // Clear any existing content
 
             const resultList = document.createElement("ul")
-            for (const payload of imageUrls) {
-                console.log(payload)
+            for (const result of searchResults) {
 
                 const li = document.createElement("li")
                 const image = document.createElement("img");
-                image.src = payload.image_url;
+                image.src = result.payload.image_url;
                 image.style.height = "200px"
                 image.style.width = "auto"
                 li.appendChild(image)
                 const a = document.createElement("a")
-                a.href = payload.page_url
-                a.innerHTML = payload.page_url
+                a.href = result.payload.page_url
+                a.innerHTML = result.payload.page_url
                 li.appendChild(a)
+                const p = document.createElement("p")
+                p.innerHTML = result.score
+                li.appendChild(p)
                 resultList.appendChild(li)
                 
             }

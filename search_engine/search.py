@@ -19,7 +19,7 @@ class SearchEngineClient:
         self.page_index_path = page_index_path
 
         # load the vector index clients
-        self.open_clip_image_client = vector_index_client.VectorIndexClient("open_clip_image")
+        self.open_clip_image_client = vector_index_client.VectorIndexClient("open_clip_image", hostname="localhost")
 
         # load the embedding providers
         self.open_clip_embedding_provider = embedding_provider.EmbeddingProvider("open_clip")
@@ -32,4 +32,4 @@ class SearchEngineClient:
         pass
 
 if __name__ == "__main__":
-    client = SearchEngineClient()
+    pass

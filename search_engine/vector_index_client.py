@@ -46,14 +46,24 @@ class VectorIndexClient:
         return upsert_response.status
     
     def search(self, vector: np.array) -> List[vector_index.SearchResult]:
-        # This method is not finished
-        # it needs to convert the search_response
-        # into the suggested return type
         search_request_proto = vector_index_pb2.SearchRequest(nparray_bytes=vector.tobytes())
 
         search_response = self.stub.Search(search_request_proto)
-
-        print(search_response)
+        
+        results = list()
+        for result_proto in search_response.results:
+            payload = vector_index.VectorPayload(
+                text_section_idx=result_proto.payload.text_section_idx,
+                image_url=result_proto.payload.image_url,
+                page_url=result_proto.payload.page_url
+            )
+            score = result_proto.score
+            results.append(vector_index.SearchResult(
+                payload=payload,
+                score=score
+            ))
+        return results
+            
     
     def checkpoint(self):
         checkpoint_request_proto = vector_index_pb2.CheckpointRequest(request="")
@@ -100,4 +110,12 @@ if __name__ == "__main__":
 
         image_embedding = provider.open_clip_embed_image(image).astype(np.float32)
 
-        client.search(image_embedding)
+
+        search_results = client.search(image_embedding)
+        #result_html = ""
+        #for result in search_results:
+        #    result_html += f'<img src="{result.payload.image_url}"><p>{result.score}</p><a href="{result.#payload.page_url}">page</a><br>'
+        #with open("/home/cameron/Search_Engine/test_result.html",'w') as f:
+        #    f.write(result_html)
+
+

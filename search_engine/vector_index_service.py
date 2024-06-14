@@ -49,6 +49,7 @@ class VectorIndexService(vector_index_pb2_grpc.VectorIndexServicer):
         '''
 
         try: 
+            print("recieved search request")
             vector = np.frombuffer(request.nparray_bytes, dtype=np.float32)
             results = self.index.search(vector)
             
