@@ -1,6 +1,6 @@
-syntax = "proto3"
+syntax = "proto3";
 
-service Embedding {
+service EmbeddingService {
     rpc EmbedImage (ImageEmbeddingRequest) returns (Embedding) {}
     rpc EmbedText (TextEmbeddingRequest) returns (Embedding) {}
 }
@@ -15,7 +15,7 @@ message TextEmbeddingRequest {
     string text = 1;
 }
 
-message embedding {
-    bytes nparray_bytes = 1;
+message Embedding {
+    repeated float values = 1;
     int32 dim = 2;
 }

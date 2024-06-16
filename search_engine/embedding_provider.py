@@ -35,6 +35,7 @@ class EmbeddingProvider:
             self.open_clip_init()
             self.generate_embeddings_and_upsert = self.open_clip
             self.checkpoint = self.open_clip_checkpoint
+            self.embed_image = self.open_clip_embed_image
             
     
     def open_clip_init(self):
