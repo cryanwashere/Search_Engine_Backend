@@ -11,11 +11,15 @@ RUN apt-get update && \
 
 
 
- 
+# This is an installation of pytorch and corresponding torchvision
+
 # install CPU-only pytorch
-RUN pip3 install torch==1.11.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+#RUN pip3 install torch==1.11.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
 # install the CPU version of torchvision, (the version that is uses the previously installed version of torch as a dependency)
-RUN pip install torchvision==0.12.0+cpu --extra-index-url https://download.pytorch.org/whl/cpu
+#RUN pip install torchvision==0.12.0+cpu --extra-index-url https://download.pytorch.org/whl/cpu
+
+# Here is the same thing but for another version of torch and torchvision
+RUN pip install torch==2.2.0 torchvision==0.17.0 --index-url https://download.pytorch.org/whl/cpu
 
 # several dependencies for Open Clip that can be installed manually
 RUN pip install ftfy
@@ -29,8 +33,10 @@ RUN pip install huggingface_hub
 RUN pip install --no-deps open_clip_torch
 
 
-#RUN pip3 install -U sentence-transformers
-#RUN pip3 install transformers
+
+RUN pip3 install -U sentence-transformers
+RUN pip3 install transformers
+
 
 # special command to install gRPC
 RUN python -m pip install grpcio
