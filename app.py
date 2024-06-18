@@ -41,7 +41,12 @@ class TextSearchRequest(BaseModel):
 @app.post("/search_text")
 async def search_text(text_search_request: TextSearchRequest):
     query = text_search_request.query
-    return "hello"
+    results = search_client.search_text(query)
+    print(results)
+    results = [r.dict() for r in results]
+    return JSONResponse({
+        "search_result" : results
+    })
 
 
 # search an image 
