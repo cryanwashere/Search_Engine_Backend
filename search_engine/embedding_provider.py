@@ -7,6 +7,8 @@ import open_clip
 import vector_index_client
 import vector_index
 from PIL import Image
+from sentence_transformers import SentenceTransformer
+
 
 
 class EmbeddingProvider:
@@ -36,7 +38,15 @@ class EmbeddingProvider:
             self.generate_embeddings_and_upsert = self.open_clip
             self.checkpoint = self.open_clip_checkpoint
             self.embed_image = self.open_clip_embed_image
-            
+        if model_name == "snowflake_arctic_s":
+            self.snowflake_arctic_s_init()
+            self.generate_embeddings_and_upsert = self.snowflake_arctic_s
+            self.checkpoint = self.snowflake_arctic_checkpoint
+            self.embed_text = self.snowflake_arctic_s_embed_text
+
+    '''
+    METHODS FOR OPEN CLIP
+    '''
     
     def open_clip_init(self):
         # load the CLIP models to encode image or text features
@@ -96,13 +106,65 @@ class EmbeddingProvider:
 
             upsert_status = self.image_index.upsert(image_features, payload)
             self.logger.log(f"\t({i}) upserted image embedding {image_url_list[i][-50:]} status: {upsert_status}")
+    
+    '''
+    METHODS FOR SNOWFLAKE ARTIC S
+    '''
+
+    def snowflake_arctic_s_init(self):
+        self.model = SentenceTransformer("Snowflake/snowflake-arctic-embed-s")
+        self.index = vector_index_client.VectorIndexClient("snowflake_arctic_s")
+
+        self.logger.log("Loaded model and vector index client")
+    
+    def snowflake_arctic_s_embed_text(self, text: str) -> np.array:
+        document_embeddings = self.model.encode(text).squeeze()
+        document_embeddings = np.array(document_embeddings)
+        return document_embeddings
+
+    def snowflake_arctic_s(self, page_url: str, page_index_client: page_index.PageIndexClient):
+        page_data = page_index_client.retrieve_page_data(page_url)
+
+        if page_data is None: 
+            self.logger.error(f"failed to load page data for url: {url}")
+            return 
+
+        text_sections = page_data.text_sections
+
+        if len(text_sections) <= 0:
+            self.logger.log("page does not have any viable text sections, moving on.")
+            return
+    
+        document_embeddings = self.model.encode(text_sections)
+        
+        document_embeddings = np.array(document_embeddings)
+
+        for i, embedding in enumerate(document_embeddings):
+
+            assert embedding.dtype == np.float32
+
+            payload = vector_index.VectorPayload(
+                text_section_idx=i,
+                image_url='',
+                page_url=page_url
+            )
+            upsert_status = self.index.upsert(embedding, payload)
+            self.logger.log(f"\t({i}) Upserted text embedding. Status: {upsert_status}")
+
+    def snowflake_arctic_checkpoint(self):
+        self.index.checkpoint()
+
+
+
+
+
 
 
 
 # testing     
 if __name__ == "__main__":
-    embedding_provider = EmbeddingProvider("open_clip")
+    embedding_provider = EmbeddingProvider("snowflake_arctic_s")
 
-    page_index_client = page_index.PageIndexClient("/project-dir/index_v1/page_index")
+    page_index_client = page_index.PageIndexClient("/home/cameron/Search_Engine/index_v1/page_index")
 
-    embedding_provider.generate_embeddings_and_upsert('https://en.wikipedia.org/wiki/Rabbit', page_index_client)
+    embedding_provider.generate_embeddings_and_upsert('https://en.wikipedia.org/wiki/!!!', page_index_client)
