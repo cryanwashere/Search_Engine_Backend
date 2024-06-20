@@ -1,62 +1,58 @@
+# containers/
 
-create a vector index service for a particular model: 
-```python3 vector_index.py create MODEL_NAME MODEL_DIM Cosine```
-
-start a vector index service for a particular model:
-```python3 run_vector_index_container.py MODEL_NAME```
+A folder containing folders for each container that is used in the search engine process
 
 
-Other cool thing:
-```
- 1  cd /project-dir
-    2  ls
-    3  cd Search_Engine_Backend
-    4  ls
-    5  cd search_engine
-    6  ls
-    7  python3 embedding_provider.py
-    8  python3 embedding_provider.py
-    9  python3 embedding_provider.py
-   10  python3 embedding_provider.py
-   11  clear
-   12  python3 embedding_provider.py
-   13  python3 embedding_provider.py
-   14  python3 embedding_provider.py
-   15  python3 embedding_provider.py
-   16  python3 embedding_provider.py
-   17  clear
-   18  python3 embedding_provider.py
-   19  clear
-   20  pip install --no-deps open_clip_torch
-   21  python3 -c "import open_clip"
-   22  pip install torchvision+cpu
-   23  pip install torchvision+cpu torchvision+cpu -f https://download.pytorch.org/whl/torch_stable.html
-   24  torch
-   25  pip list | grep torch
-   26  pip install torchvision==0.9.0+cpu  -f https://download.pytorch.org/whl/torch_stable.html
-   27  pip install torchvision==0.12.0+cpu --extra-index-url https://download.pytorch.org/whl/cpu
-   28  python3 -c "import open_clip"
-   29  pip install ftfy
-   30  pip install protobuf
-   31  pip install sentencepiece
-   32  python3 -c "import open_clip"
-   33  python3 embedding_provider.py
-   34  clear
-   35  python3 embedding_provider.py
-   36  pip install ngtpy
-   37  pip install ngt
-   38  python3 embedding_provider.py
-   39  python3 embedding_provider.py
-   40  python3 embedding_provider.py
-   41  python3 embedding_provider.py
-   42  python3 embedding_provider.py
-   43  python3 embedding_provider.py
-   44  python3 embedding_provider.py
-   45  python3 embedding_provider.py
-   46  python3 embedding_provider.py
-   47  python3 embedding_provider.py
-   48  cat ~/.bash_history
-   49  ls -la ~
-   50  cat ~/.cache
-   51  history
-```
+# controllers/ 
+
+Meant to be used for files that define how containers are used and started. There is nothing important in here right now
+
+# proto/
+
+Store files for gRPC protocols. The proto files define how each gRPC service is used.
+
+# traditional_search/
+
+Don't look here, there is nothing interesting
+
+
+# .
+
+There are a lot of files here. I put all the files in this folder, because it is the easiest way to avoid complicated import errors, and other difficulties. All of the containers have a the project directory attached as a volume, so they will run code from this directory. 
+
+There is no point in explaining every file, and not every file is even used. Only the most important files will be explained: 
+
+
+
+# crawl_plan.py
+
+Connect to a database containing urls to crawl, and retrieve the urls (given an index)
+
+
+# crawl_session.py
+
+Perform the crawling process
+
+
+# docker-compose.yml
+
+Define container services, and the network that the containers use to communicate. Using this file, services can be started with the ```docker-compose``` command. For example:
+
+```docker-compose up crawler```
+
+This would start the crawler. The subset URLs that the crawler is instructed to crawl are passed to it by an environment variable, defined in the docker-compose file
+
+
+# embedding_provider.py
+
+This contains the code for generating embeddings, and upserting them to a vector index. 
+
+
+# page_index.py
+
+Store data from pages, and images from pages in a database
+
+
+# vector_index_client.py 
+
+This is how the vector index is accessed. The ```VectorIndexClient``` connects to a ```VectorIndexService``` over gRPC.

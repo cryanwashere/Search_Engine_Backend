@@ -1,43 +1,24 @@
-helpful commands: 
+# app/
 
-```
-python mapped_site_crawl.py https://site.com/sitemap.xml site
-```
+Source code for a backend, written in Golang. This is far from complete. Eventually the backend is intended to create a gRPC connection to the ```search``` container, which is how it will be used to get search results
 
-```
-source env/bin/activate
-```
+# processors/ 
 
+Folders for code that is used to manually gather content, as an alternative to crawling, when such an option is available.
 
+# search_engine/ 
 
-
+Everything used for crawling, storing, and searching content. Most important things are in this folder.
 
 
-```
-nohup python indexer.py > /home/logs/index_nasa.out &
-```
+# static/ 
 
+Things that are meant to be served statically by the app
 
- ```
-docker build -f crawling_container/Dockerfile -t crawling_container .
- ```
+# app.py
 
+The FastAPI (python) server for the search. This is intended to be used just for testing the search
 
- ```
- docker run -v /home/volume:/docker-volume -it crawling_container /bin/bash
- ```
+# search_page.html
 
-
-output the log file for the server
-```
-journalctl -u balene_prod > /home/logs/server_1.out
-```
-
-```
-sudo docker run -e CRAWL_INSTRUCTION=400-1000 -v /home/cameron/Search_Engine:/project-dir crawling_container
-```
-
-
-```
-python3 -m grpc_tools.protoc -I./protos --python_out=. --pyi_out=. --grpc_python_out=. protos/vector_index.proto
-```
+Page without any web UI for testing
