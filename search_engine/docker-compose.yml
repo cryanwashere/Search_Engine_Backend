@@ -1,11 +1,132 @@
 
 
 services: 
-  sample_model:
-    build: ./vector_index_container
-    command: python3 vector_index_service.py
-    environment: 
-      - VECTOR_INDEX_NAME=sample
+  crawler:
+    image: crawling_container
+    container_name: crawler
+    command: python3 /project-dir/Search_Engine_Backend/search_engine/crawl_session.py
+    environment:
+      - CRAWL_INSTRUCTION=160000-170000
+      - POLITENESS=False
     volumes:
-      ~/Search_Engine:/project-dir
+      - ~/Search_Engine:/project-dir
+
+  crawler_two:
+    image: crawling_container
+    container_name: crawler_two
+    command: python3 /project-dir/Search_Engine_Backend/search_engine/crawl_session.py
+    environment:
+      - CRAWL_INSTRUCTION=170000-180000
+      - POLITENESS=False
+    volumes:
+      - ~/Search_Engine:/project-dir
+
+
+
+  sample_service:
+    image: vector_index_container
+    container_name: sample-service
+    command: python3 /project-dir/Search_Engine_Backend/search_engine/vector_index_service.py
+    environment: 
+      - MODEL_NAME=sample
+      - VECTOR_INDEX_PATH=/project-dir/index_v1/vector_index
+    volumes:
+      - ~/Search_Engine:/project-dir
+
+    networks:
+      - index_network
+    ports:
+      - "50000:50000"
+  
+  search_service:
+    image: search
+    container_name: search-service
+    command: python3 /project-dir/Search_Engine_Backend/search_engine/search_service.py
+    volumes:
+      - ~/Search_Engine:/project-dir
+    networks:
+      - index_network
+    ports:
+      - "50010:50010"
+    depends_on:
+      - open_clip_image_service
+      - snowflake_arctic_s_service
+  
+  open_clip_image_service:
+    image: vector_index_container
+    container_name: open-clip-image-service
+    command: python3 /project-dir/Search_Engine_Backend/search_engine/vector_index_service.py
+    environment:
+      - MODEL_NAME=open_clip_image
+      - VECTOR_INDEX_PATH=/project-dir/index_v1/vector_index
+    volumes:
+      - ~/Search_Engine:/project-dir
+    networks:
+      - index_network
+    ports:
+      - "50001:50001"
+  
+  snowflake_arctic_s_service:
+    image: vector_index_container
+    container_name: snowflake-arctic-s-service
+    command: python3 /project-dir/Search_Engine_Backend/search_engine/vector_index_service.py
+    environment:
+      - MODEL_NAME=snowflake_arctic_s
+      - VECTOR_INDEX_PATH=/project-dir/index_v1/vector_index
+    volumes:
+      - ~/Search_Engine:/project-dir
+    networks:
+      - index_network
+    ports:
+      - "50003:50003"
+
+  open_clip_embeddings:
+    image: embedding_container
+    container_name: open-clip-embeddings
+    command: python3 /project-dir/Search_Engine_Backend/search_engine/embedding_generation_session.py
+    volumes:
+      - ~/Search_Engine:/project-dir
+    networks:
+      - index_network
+    environment: 
+      - CRAWL_PLAN_DB_PATH=/project-dir/crawl_plans/wikipedia_v1.sqlite
+      - EMBED_INSTRUCTION=130000-150000
+      - PAGE_INDEX_PATH=/project-dir/index_v1/page_index
+      - VECTOR_INDEX_PATH=/project-dir/index_v1/vector_index
+      - MODEL_STR=open_clip
+    depends_on: 
+      - open_clip_image_service
+  
+  snowflake_arctic_s_embeddings:
+    image: embedding_container
+    container_name: snowflake-arctic-s-embeddings
+    command: python3 /project-dir/Search_Engine_Backend/search_engine/embedding_generation_session.py
+    volumes:
+      - ~/Search_Engine:/project-dir
+    networks:
+      - index_network
+    environment: 
+      - CRAWL_PLAN_DB_PATH=/project-dir/crawl_plans/wikipedia_v1.sqlite
+      - EMBED_INSTRUCTION=81-10000
+      - PAGE_INDEX_PATH=/project-dir/index_v1/page_index
+      - VECTOR_INDEX_PATH=/project-dir/index_v1/vector_index
+      - MODEL_STR=snowflake_arctic_s
+    depends_on:
+      - snowflake_arctic_s_service
     
+    
+  sample_client:
+    image: embedding_container
+    container_name: sample-client
+    command: python3 /project-dir/Search_Engine_Backend/search_engine/vector_index_client.py
+    volumes:
+      - ~/Search_Engine:/project-dir
+    networks:
+      - index_network
+    depends_on:
+      - sample_service
+
+
+networks: 
+  index_network:
+    driver: bridge

@@ -4,6 +4,15 @@ syntax = "proto3";
 service VectorIndex {
     rpc Upsert (UpsertRequest) returns (UpsertResponse) {}
     rpc Search (SearchRequest) returns (SearchResponse) {}
+    rpc Checkpoint (CheckpointRequest) returns (CheckpointResponse) {}
+}
+
+message CheckpointRequest {
+    string request = 1;
+}
+
+message CheckpointResponse {
+    string response = 1;
 }
 
 

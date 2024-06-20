@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+service Search {
+    rpc SearchImage (ImageRequest) returns (SearchEngineResponse) {}
+    rpc SearchText (TextRequest) returns (SearchEngineResponse) {}
+}
+
+
+message ImageRequest {
+    bytes image_bytes = 1;
+}
+
+
+message TextRequest {
+    string text = 1; 
+}
+
+
+message SearchEngineResult {
+    string image_url = 1;
+    string page_url = 2; 
+    int32 text_section_idx = 3; 
+    string text_preview = 4;
+}
+
+message SearchEngineResponse {
+    repeated SearchEngineResult results = 1;
+}

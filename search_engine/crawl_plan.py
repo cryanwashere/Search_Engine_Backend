@@ -1,6 +1,4 @@
 from sqlitedict import SqliteDict
-import request_client
-import parse
 
 class CrawlPlanDatabaseClient:
     '''

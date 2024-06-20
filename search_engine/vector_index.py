@@ -41,6 +41,9 @@ class SearchResult:
     payload : VectorPayload
     score : float
 
+    def dict(self):
+        return dataclasses.asdict(self)
+
 
 
 
@@ -115,16 +118,12 @@ class VectorIndex:
         self.ngt_index.save()
         self.id_map_db.commit()
     
-    def save(self):
-        self.ngt_index.save()
-    
     def close(self):
         self.ngt_index.close()
         self.id_map_db.close()
 
     def finish(self):
         self.checkpoint()
-        self.save()
         self.close()
 
 
@@ -133,8 +132,7 @@ class VectorIndex:
 if __name__ == "__main__":
     
     
-    match sys.argv[1]:
-        case "create":
+    if sys.argv[1] == "create":
             new_index_name = sys.argv[2]
             new_index_dim = int(sys.argv[3])
             new_index_distance_type = sys.argv[4]

@@ -5,6 +5,11 @@ Each of the vector index services need to be run on their own port. This is the 
 This file can simply be imported, and used to get correct ports
 
 '''
-_map = {
-    "sample" : 50000
-}
+port_map = {
+    "sample" : 50000,
+    "open_clip_image" : 50001,
+    "open_clip_text" : 50002,
+    "snowflake_arctic_s" : 50003,
+} 
+
+search_engine_port = 50010

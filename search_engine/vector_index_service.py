@@ -8,9 +8,10 @@ import os
 import grpc
 import vector_index_pb2
 import vector_index_pb2_grpc
+import index_network_config
 
 
- 
+
 class VectorIndexService(vector_index_pb2_grpc.VectorIndexServicer):
     '''
     
@@ -48,6 +49,7 @@ class VectorIndexService(vector_index_pb2_grpc.VectorIndexServicer):
         '''
 
         try: 
+            print("recieved search request")
             vector = np.frombuffer(request.nparray_bytes, dtype=np.float32)
             results = self.index.search(vector)
             
@@ -62,20 +64,27 @@ class VectorIndexService(vector_index_pb2_grpc.VectorIndexServicer):
 
         except Exception as e:
             print(e)
-            
+    
+    def Checkpoint(self, request, context):
+        # build the NGT index, and save it
+        self.index.checkpoint()
+        print(f"checkpoint complete")
+        return vector_index_pb2.CheckpointResponse(response="checkpoint complete")
     
 
-def serve(vector_index_path):
+def serve(vector_index_path, model_name):
     print("starting gRPC service")
     server = grpc.server(futures.ThreadPoolExecutor(max_workers = 10))
     vector_index_service = VectorIndexService(vector_index_path)
     print(f"opened vector index at: {vector_index_path}")
     print(f"vector index has {vector_index_service.index.ngt_index.get_num_of_objects()} points")
-    vector_index_pb2_grpc.add_VectorIndexServicer_to_server(vector_index_service,server)
+    vector_index_pb2_grpc.add_VectorIndexServicer_to_server(vector_index_service, server)
 
 
-    # This runs in a container, so it will always serve on the same port. This is not what the port will be outside the container! The server's port is specified when the container is run, and will be forwarded to this port inside the container.
-    server.add_insecure_port('[::]:50051')
+    port = index_network_config.port_map[model_name]
+    print(f"starting service on port: {port}")
+
+    server.add_insecure_port(f'[::]:{port}')
 
     try: 
         server.start()
@@ -84,7 +93,7 @@ def serve(vector_index_path):
         # make sure to save the vectors before the program exits
         print("saving vector index...")
         vector_index_service.index.finish()
-
+ 
 if __name__ == "__main__":
     '''
     
@@ -106,4 +115,4 @@ if __name__ == "__main__":
     path = os.path.join(vector_index_path, model_name)
 
     # start the server
-    serve(path)
+    serve(path, model_name)

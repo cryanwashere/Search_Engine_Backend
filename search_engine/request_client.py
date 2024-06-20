@@ -43,6 +43,7 @@ class RequestClient:
         Given a url for a web page, load the html content of the url, and extract the data from the html content
         '''
         response = requests.get(page_url, headers=self.headers)
+
         if response.status_code == 200:
             # EXTRACT CONTENT FOR THE PAGE INDEX
             html_content = response.text  

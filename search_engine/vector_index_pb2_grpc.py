@@ -49,6 +49,11 @@ class VectorIndexStub(object):
                 request_serializer=vector__index__pb2.SearchRequest.SerializeToString,
                 response_deserializer=vector__index__pb2.SearchResponse.FromString,
                 _registered_method=True)
+        self.Checkpoint = channel.unary_unary(
+                '/VectorIndex/Checkpoint',
+                request_serializer=vector__index__pb2.CheckpointRequest.SerializeToString,
+                response_deserializer=vector__index__pb2.CheckpointResponse.FromString,
+                _registered_method=True)
 
 
 class VectorIndexServicer(object):
@@ -66,6 +71,12 @@ class VectorIndexServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Checkpoint(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_VectorIndexServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -78,6 +89,11 @@ def add_VectorIndexServicer_to_server(servicer, server):
                     servicer.Search,
                     request_deserializer=vector__index__pb2.SearchRequest.FromString,
                     response_serializer=vector__index__pb2.SearchResponse.SerializeToString,
+            ),
+            'Checkpoint': grpc.unary_unary_rpc_method_handler(
+                    servicer.Checkpoint,
+                    request_deserializer=vector__index__pb2.CheckpointRequest.FromString,
+                    response_serializer=vector__index__pb2.CheckpointResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -134,6 +150,33 @@ class VectorIndex(object):
             '/VectorIndex/Search',
             vector__index__pb2.SearchRequest.SerializeToString,
             vector__index__pb2.SearchResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def Checkpoint(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/VectorIndex/Checkpoint',
+            vector__index__pb2.CheckpointRequest.SerializeToString,
+            vector__index__pb2.CheckpointResponse.FromString,
             options,
             channel_credentials,
             insecure,

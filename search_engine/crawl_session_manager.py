@@ -28,9 +28,12 @@ def next_sections(n: int):
     return section_plan[:n]
 
     
-crawl_sections = next_sections(4)
+crawl_sections = next_sections(8)
 
 print(f"initializing containers for the following sections: {crawl_sections}")
+proceed = input("is this ok? [y/n]")
+if proceed != "y":
+    exit()
 
 
 for (start, end) in crawl_sections: 
@@ -52,4 +55,5 @@ for (start, end) in crawl_sections:
 
 with open('/home/cameron/Search_Engine/container_management/wikipedia_v1-sections.txt','a') as f:
     for section in crawl_sections:
+        f.write("\n")
         f.write(str(section[-1]) + "\n")
