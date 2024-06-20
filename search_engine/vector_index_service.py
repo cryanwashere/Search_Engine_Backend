@@ -11,7 +11,7 @@ import vector_index_pb2_grpc
 import index_network_config
 
 
- 
+
 class VectorIndexService(vector_index_pb2_grpc.VectorIndexServicer):
     '''
     

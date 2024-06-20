@@ -126,7 +126,7 @@ class EmbeddingProvider:
         page_data = page_index_client.retrieve_page_data(page_url)
 
         if page_data is None: 
-            self.logger.error(f"failed to load page data for url: {url}")
+            self.logger.error(f"failed to load page data for url: {page_url}")
             return 
 
         text_sections = page_data.text_sections

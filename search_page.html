@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="google-adsense-account" content="ca-pub-5375512399591036">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Search</title>
@@ -29,18 +28,9 @@ h1 {
 
 <body>
 
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5375512399591036"
-        crossorigin="anonymous"></script>
+
     <!-- top of search page -->
-    <ins class="adsbygoogle"
-        style="display:block"
-        data-ad-client="ca-pub-5375512399591036"
-        data-ad-slot="7459304495"
-        data-ad-format="auto"
-        data-full-width-responsive="true"></ins>
-    <script>
-        (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
+   
 
 
     <!--<a href="/static/about.html">about</a>-->
@@ -65,14 +55,14 @@ h1 {
 
 
     <div id="results" style="margin-top: 45vh"></div>
-    <div id="naturify_classes"></div>
+   
 
     <script>
 
         function searchText() {
             // clear out the search results html
             document.getElementById("results").innerHTML = "";
-            document.getElementById("naturify_classes").innerHTML = "";
+           
 
             var inputText = document.getElementById('user-input').value;
             console.log(inputText)
@@ -93,30 +83,7 @@ h1 {
                 console.log("recieved api response: ");
                 console.log(data);
 
-                // display each of the images
-                //data.search_result.forEach(e => {
-                //    if (e.type == "image") {
-                //        let image_tag = "<img src='" + e.image_source + "'>";
-                //        document.getElementById("result_images").innerHTML += image_tag;
-                //    }
-                //});
-                document.getElementById("results").innerHTML += "<h3>Page Results</h3><br>"
-
-                for (const payload of data.text_search_result) {
-                    const a = document.createElement("a")
-                    a.href = payload.page_url
-                    a.innerHTML = payload.page_url
-                    document.getElementById("results").innerHTML += a.outerHTML + "<br>"
-                }
-
-                document.getElementById("results").innerHTML += "<h3>Images</h3><br>"
                 createImageGallery(data.search_result)
-                console.log("created image gallery")
-
-                // display the naturify predictions
-                data.nat_predictions.forEach(e => {
-                    document.getElementById("naturify_classes").innerHTML += e.species.common_name + " " + e.score + " <br>";
-                });
                 
             })
             .catch(error => {
@@ -129,8 +96,7 @@ h1 {
 
             // clear out the search results html
             document.getElementById("results").innerHTML = "";
-            document.getElementById("naturify_classes").innerHTML = "";
-
+            
             // Get the file input element
             var inputElement = document.getElementById('imageInput');
             // Check if a file is selected
