@@ -1,8 +1,8 @@
 syntax = "proto3";
 
 service Search {
-    rpc SearchImage (ImageRequest) returns (SearchResponse) {}
-    rpc SearchText (TextRequest) returns (SearchResponse) {}
+    rpc SearchImage (ImageRequest) returns (SearchEngineResponse) {}
+    rpc SearchText (TextRequest) returns (SearchEngineResponse) {}
 }
 
 
@@ -16,13 +16,13 @@ message TextRequest {
 }
 
 
-message SearchResult {
+message SearchEngineResult {
     string image_url = 1;
     string page_url = 2; 
     int32 text_section_idx = 3; 
     string text_preview = 4;
 }
 
-message SearchResponse {
-    repeated SearchResult results = 1;
+message SearchEngineResponse {
+    repeated SearchEngineResult results = 1;
 }

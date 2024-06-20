@@ -17,7 +17,7 @@ class TextRequest(_message.Message):
     text: str
     def __init__(self, text: _Optional[str] = ...) -> None: ...
 
-class SearchResult(_message.Message):
+class SearchEngineResult(_message.Message):
     __slots__ = ("image_url", "page_url", "text_section_idx", "text_preview")
     IMAGE_URL_FIELD_NUMBER: _ClassVar[int]
     PAGE_URL_FIELD_NUMBER: _ClassVar[int]
@@ -29,8 +29,8 @@ class SearchResult(_message.Message):
     text_preview: str
     def __init__(self, image_url: _Optional[str] = ..., page_url: _Optional[str] = ..., text_section_idx: _Optional[int] = ..., text_preview: _Optional[str] = ...) -> None: ...
 
-class SearchResponse(_message.Message):
+class SearchEngineResponse(_message.Message):
     __slots__ = ("results",)
     RESULTS_FIELD_NUMBER: _ClassVar[int]
-    results: _containers.RepeatedCompositeFieldContainer[SearchResult]
-    def __init__(self, results: _Optional[_Iterable[_Union[SearchResult, _Mapping]]] = ...) -> None: ...
+    results: _containers.RepeatedCompositeFieldContainer[SearchEngineResult]
+    def __init__(self, results: _Optional[_Iterable[_Union[SearchEngineResult, _Mapping]]] = ...) -> None: ...

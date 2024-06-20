@@ -9,4 +9,7 @@ port_map = {
     "sample" : 50000,
     "open_clip_image" : 50001,
     "open_clip_text" : 50002,
+    "snowflake_arctic_s" : 50003,
 } 
+
+search_engine_port = 50010

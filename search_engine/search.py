@@ -24,7 +24,7 @@ class SearchEngineClient:
         self.snowflake_arctic_s_client = vector_index_client.VectorIndexClient("snowflake_arctic_s", hostname="localhost")
 
         # load the embedding providers
-        #self.open_clip_embedding_provider = embedding_provider.EmbeddingProvider("open_clip")
+        self.open_clip_embedding_provider = embedding_provider.EmbeddingProvider("open_clip")
 
         self.snowflake_arctic_s_embedding_provider = embedding_provider.EmbeddingProvider("snowflake_arctic_s")
     

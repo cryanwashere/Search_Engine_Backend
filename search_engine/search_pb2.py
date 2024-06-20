@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0csearch.proto\"#\n\x0cImageRequest\x12\x13\n\x0bimage_bytes\x18\x01 \x01(\x0c\"\x1b\n\x0bTextRequest\x12\x0c\n\x04text\x18\x01 \x01(\t\"c\n\x0cSearchResult\x12\x11\n\timage_url\x18\x01 \x01(\t\x12\x10\n\x08page_url\x18\x02 \x01(\t\x12\x18\n\x10text_section_idx\x18\x03 \x01(\x05\x12\x14\n\x0ctext_preview\x18\x04 \x01(\t\"0\n\x0eSearchResponse\x12\x1e\n\x07results\x18\x01 \x03(\x0b\x32\r.SearchResult2h\n\x06Search\x12/\n\x0bSearchImage\x12\r.ImageRequest\x1a\x0f.SearchResponse\"\x00\x12-\n\nSearchText\x12\x0c.TextRequest\x1a\x0f.SearchResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0csearch.proto\"#\n\x0cImageRequest\x12\x13\n\x0bimage_bytes\x18\x01 \x01(\x0c\"\x1b\n\x0bTextRequest\x12\x0c\n\x04text\x18\x01 \x01(\t\"i\n\x12SearchEngineResult\x12\x11\n\timage_url\x18\x01 \x01(\t\x12\x10\n\x08page_url\x18\x02 \x01(\t\x12\x18\n\x10text_section_idx\x18\x03 \x01(\x05\x12\x14\n\x0ctext_preview\x18\x04 \x01(\t\"<\n\x14SearchEngineResponse\x12$\n\x07results\x18\x01 \x03(\x0b\x32\x13.SearchEngineResult2t\n\x06Search\x12\x35\n\x0bSearchImage\x12\r.ImageRequest\x1a\x15.SearchEngineResponse\"\x00\x12\x33\n\nSearchText\x12\x0c.TextRequest\x1a\x15.SearchEngineResponse\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -25,10 +25,10 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_IMAGEREQUEST']._serialized_end=51
   _globals['_TEXTREQUEST']._serialized_start=53
   _globals['_TEXTREQUEST']._serialized_end=80
-  _globals['_SEARCHRESULT']._serialized_start=82
-  _globals['_SEARCHRESULT']._serialized_end=181
-  _globals['_SEARCHRESPONSE']._serialized_start=183
-  _globals['_SEARCHRESPONSE']._serialized_end=231
-  _globals['_SEARCH']._serialized_start=233
-  _globals['_SEARCH']._serialized_end=337
+  _globals['_SEARCHENGINERESULT']._serialized_start=82
+  _globals['_SEARCHENGINERESULT']._serialized_end=187
+  _globals['_SEARCHENGINERESPONSE']._serialized_start=189
+  _globals['_SEARCHENGINERESPONSE']._serialized_end=249
+  _globals['_SEARCH']._serialized_start=251
+  _globals['_SEARCH']._serialized_end=367
 # @@protoc_insertion_point(module_scope)

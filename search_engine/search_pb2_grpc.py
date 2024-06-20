@@ -5,7 +5,7 @@ import warnings
 
 import search_pb2 as search__pb2
 
-GRPC_GENERATED_VERSION = '1.64.1'
+GRPC_GENERATED_VERSION = '1.64.0'
 GRPC_VERSION = grpc.__version__
 EXPECTED_ERROR_RELEASE = '1.65.0'
 SCHEDULED_RELEASE_DATE = 'June 25, 2024'
@@ -42,12 +42,12 @@ class SearchStub(object):
         self.SearchImage = channel.unary_unary(
                 '/Search/SearchImage',
                 request_serializer=search__pb2.ImageRequest.SerializeToString,
-                response_deserializer=search__pb2.SearchResponse.FromString,
+                response_deserializer=search__pb2.SearchEngineResponse.FromString,
                 _registered_method=True)
         self.SearchText = channel.unary_unary(
                 '/Search/SearchText',
                 request_serializer=search__pb2.TextRequest.SerializeToString,
-                response_deserializer=search__pb2.SearchResponse.FromString,
+                response_deserializer=search__pb2.SearchEngineResponse.FromString,
                 _registered_method=True)
 
 
@@ -72,12 +72,12 @@ def add_SearchServicer_to_server(servicer, server):
             'SearchImage': grpc.unary_unary_rpc_method_handler(
                     servicer.SearchImage,
                     request_deserializer=search__pb2.ImageRequest.FromString,
-                    response_serializer=search__pb2.SearchResponse.SerializeToString,
+                    response_serializer=search__pb2.SearchEngineResponse.SerializeToString,
             ),
             'SearchText': grpc.unary_unary_rpc_method_handler(
                     servicer.SearchText,
                     request_deserializer=search__pb2.TextRequest.FromString,
-                    response_serializer=search__pb2.SearchResponse.SerializeToString,
+                    response_serializer=search__pb2.SearchEngineResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -106,7 +106,7 @@ class Search(object):
             target,
             '/Search/SearchImage',
             search__pb2.ImageRequest.SerializeToString,
-            search__pb2.SearchResponse.FromString,
+            search__pb2.SearchEngineResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -133,7 +133,7 @@ class Search(object):
             target,
             '/Search/SearchText',
             search__pb2.TextRequest.SerializeToString,
-            search__pb2.SearchResponse.FromString,
+            search__pb2.SearchEngineResponse.FromString,
             options,
             channel_credentials,
             insecure,
