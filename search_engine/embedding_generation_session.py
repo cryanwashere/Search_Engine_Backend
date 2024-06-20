@@ -26,6 +26,7 @@ class EmbeddingGenerationSession:
         
         # the embedding instruction is passed to the EmbeddingGenerationSession in the same format as the crawl instruction. 
         self.start, self.end = parse_crawl_instruction(embed_instruction)
+        self.embed_instruction = embed_instruction
         
         # the EmbeddingProvider object will generate the embeddings, and will access the page index through a reference
         self.embedding_provider = embedding_provider.EmbeddingProvider(model_str)
@@ -52,6 +53,19 @@ class EmbeddingGenerationSession:
         
         # now that we are done, we want to checkpoint the vector index to save our progress
         self.embedding_provider.checkpoint()
+
+        #log_embedding_session("/project-dir/se-management/wikipedia_v1-sections.yml",self.embed_instruction)
+
+def log_embedding_session(se_management_path, crawl_instruction):
+    with open(se_management_path,'r') as f:
+        se_management = yaml.safe_load(f)
+        
+    se_management['open_clip Embedded Sections'].append(crawl_instruction)
+    print(f"{se_management}")
+
+    with open(se_management_path,'w') as f:
+        yaml.dump(se_management, f)
+
 
 def parse_crawl_instruction(crawl_instruction):
     crawl_instruction = crawl_instruction.split('-')

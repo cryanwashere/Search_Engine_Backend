@@ -13,7 +13,7 @@ from sqlitedict import SqliteDict
 
 '''
  
-DATA STRUCTURE FOR THE PAGE INDEX FILES
+DATA STRUCTURE FOR THE PAGE INDEX ENTRIES
 
 
     Here is the procedure for storing data for each of the indexed pages:
@@ -103,6 +103,13 @@ class PageIndexClient:
 
         self.page_data_db[page_id] = page_data_dict
         self.page_data_db.commit()
+    
+    def check_page_url(self, url: str) -> bool:
+        '''
+        Check if the page URL has been crawled. Returns True if the page has been crawled, and returns False if the page has not been crawled
+        '''
+        page_id = self.get_page_id(url)
+        return self.page_data_db[page_id] != None
         
     def upsert_image_bytes(self, image_url : str, image_bytes : bytes):
       
@@ -116,8 +123,9 @@ class PageIndexClient:
         '''
         Given a page url, retrieve the page data if it has been indexed
         '''
-        page_id = self.get_page_id(page_url)
+        
         try:
+            page_id = self.get_page_id(page_url)
             page_data_dict = self.page_data_db[page_id]
             page_data = PageIndexData(**page_data_dict)
             return page_data
@@ -174,6 +182,8 @@ if __name__ == "__main__":
     elif command == "text":
         print(f"showing text sections for: {sys.argv[2]}")
         page_data = page_index_client.retrieve_page_data(sys.argv[2])
+        if page_data == None:
+            exit()
         for text_section in page_data.text_sections:
             print(text_section)
             print()
