@@ -41,6 +41,11 @@ class CrawlSession:
         self.logger = custom_logger.Logger("CrawlSession")
         self.logger.verbose = True
 
+        # keep track of various things during the crawl
+        self.images_upserted = 0
+        self.pages_upserted = 0
+
+        # set up multithreading
         self.multithreaded = multithreaded
         if multithreaded:
             # lets try to do this with multiprocessing
@@ -79,7 +84,8 @@ class CrawlSession:
         # upsert the bytes for the image
         self.page_index_client.upsert_image_bytes( image_url , image_bytes )
 
-        self.logger.log(f"upserted image bytes for url: {image_url[-50:]}")
+        self.logger.log(f"upserted image bytes for url: {image_url[-50:]}", importance=-1)
+        self.images_upserted += 1
 
     def upsert_page_data_async(self):
         '''get the page data from the top of the page data queue, and upsert it to the page index'''
@@ -94,13 +100,14 @@ class CrawlSession:
         # upsert the page data to the index database
         self.page_index_client.upsert_page_data(page_data)
 
-        self.logger.log(f"upserted page data for url: {page_data.page_url}")
+        self.logger.log(f"upserted page data for url: {page_data.page_url}", importance=-1)
+        self.pages_upserted += 1
 
     def image_bytes_upsert_process(self):
         '''Until the crawler shuts down, continually upsert image bytes from the asset upsert queue'''
         while not (self.shutdown):
             self.upsert_image_bytes_async()
-        self.logger.log("image bytes upsert process has shutdown")
+        self.logger.log("image bytes upsert process has shut down")
     
     def page_data_upsert_process(self):
         '''Until the crawler shuts down, continually upsert page data from the page data upsert queue'''
@@ -175,59 +182,106 @@ class CrawlSession:
                 time.sleep(1)
             page_url = self.crawl_plan_client.read_url(i)
             self.page_url_queue.put(page_url)
+        
+        self.logger.log("finished loading page URLS into page url queue")
+
+    def log_update(self):
+        # display information about each of the different queues
+        page_url_qsize = self.page_url_queue.qsize()
+        asset_url_qsize = self.asset_url_queue.qsize()
+
+        page_data_upsert_qsize = self.page_data_upsert_queue.qsize()
+        asset_upsert_qsize = self.asset_upsert_queue.qsize()
+
+        self.logger.log("HYPERVISOR: page url queue: {0};  asset url queue: {1}; page data upsert queue: {2}; asset upsert queue: {3}; pages upserted: {4}; images upserted: {5};".format(
+            page_url_qsize,
+            asset_url_qsize,
+            page_data_upsert_qsize, 
+            asset_upsert_qsize,
+            self.pages_upserted,
+            self.images_upserted
+        ))
+
+    def check_queues(self):
+        '''Check if the queues are all empty'''
+        return (self.page_url_queue.empty() and self.asset_url_queue.empty and self.page_data_upsert_queue.empty() and self.asset_upsert_queue.empty())
+    
 
     def hypervisor(self):
         '''This process will continuously track the multithreaded crawler, and shutdown the crawl session when the process has completed'''
 
         while True:
-
-            # display information about each of the different queues
-            page_url_qsize = self.page_url_queue.qsize()
-            asset_url_qsize = self.asset_url_queue.qsize()
-
-            page_data_upsert_qsize = self.page_data_upsert_queue.qsize()
-            asset_upsert_qsize = self.asset_upsert_queue.qsize()
-
-            self.logger.log("HYPERVISOR: page url queue: {0};  asset url queue: {1}; page data upsert queue: {2}; asset upsert queue: {3};".format(
-                page_url_qsize,
-                asset_url_qsize,
-                page_data_upsert_qsize, 
-                asset_upsert_qsize
-            ))
+            self.log_update()
+            
             time.sleep(1)
 
-            # if all of the queues are empty, then end the process
-            if (self.page_url_queue.empty() and self.asset_url_queue.empty and self.page_data_upsert_queue.empty() and self.asset_upsert_queue.empty()):
+            # if all of the queues are empty, and still empty 5 seconds later, then the process is finished
+            if self.check_queues():
+                # first wait briefly
                 time.sleep(5)
+
+                # the queues are still empty
+                if not self.check_queues():
+                    continue
+
+                # log the last update
+                self.logger.log("FINAL HYPERVISOR UPDATE:")
+                self.log_update()
+
+                # set the shutdown variable
                 self.shutdown = True
-                break
-        self.logger.log("done")
-        # now that crawling has been finished, put an entry in the management file, indicating that the given section has been completed
-        log_crawl_session("/project-dir/se-management/wikipedia_v1-sections.yml",self.crawl_instruction)
-        
+
+                # record the approximate amount of time that the crawl took
+                self.end_time = time.time()
+
+                self.logger.log(f"crawl finished after approximately: {self.end_time - self.start_time} seconds, with an average of {(self.end_time - self.start_time) / self.pages_upserted} seconds per page")
 
                 
+
+                # sleep briefly again
+                time.sleep(5)
+
+                # check the processes
+                self.logger.log("page data retrieval processes: ")
+                for process in self.page_data_retrieval_processes:
+                    self.logger.log(f"\t{process.native_id}: {process.is_alive()}")
+
+                self.logger.log("asset retrieval processes: ")
+                for process in self.asset_retrieval_processes:
+                    self.logger.log(f"\t{process.native_id}: {process.is_alive()}")
+
+
+                self.logger.log("done")
+                # now that crawling has been finished, put an entry in the management file, indicating that the given section has been completed
+                log_crawl_session("/project-dir/se-management/wikipedia_v1-sections.yml", self.crawl_instruction)
+
+                return
+                
+
 
         
 
     def initiate_multithreaded_crawl(self):
         print(f"starting multithreaded crawl...")
 
+        # keep track of when the session starts
+        self.start_time = time.time()
+
         # define how many workers will be doing the retrieval processes
-        page_retrieval_workers = 2
+        page_retrieval_workers = 4
         asset_retrieval_workers = 2
 
         # create the processes that load the page data
         self.page_data_retrieval_processes = []
         for _ in range(page_retrieval_workers):
-            process = Process(target= self.retrieve_page_data_process )
+            process = Thread( target = self.retrieve_page_data_process )
             process.start()
             self.page_data_retrieval_processes.append(process)
 
         # create the processes that load asset data
         self.asset_retrieval_processes = []
         for _ in range(asset_retrieval_workers):
-            process = Process(target= self.retrieve_asset_process )
+            process = Thread( target = self.retrieve_asset_process )
             process.start() 
             self.asset_retrieval_processes.append(process)
 
@@ -337,8 +391,6 @@ if __name__ == "__main__":
         CRAWL_PLAN_DB_PATH: the path to the database for the crawl plan
 
         PAGE_INDEX_PATH: the path to the page index where the crawled data is stored
-
-
 
     '''
 

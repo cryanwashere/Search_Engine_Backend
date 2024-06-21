@@ -117,7 +117,11 @@ class PageIndexClient:
 
         self.asset_db[image_id] = image_bytes
         self.asset_db.commit()
-
+    
+    def commit(self):
+        print("committing to page data and asset databases")
+        self.asset_db.commit()
+        self.page_data_db.commit()
     
     def retrieve_page_data(self, page_url: str) -> PageIndexData:
         '''

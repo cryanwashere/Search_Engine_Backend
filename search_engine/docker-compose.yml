@@ -4,10 +4,7 @@ services:
   crawler:
     image: crawling_container
     container_name: crawler
-    command: python3 /project-dir/Search_Engine_Backend/search_engine/crawl_session.py
-    environment:
-      - CRAWL_INSTRUCTION=160000-170000
-      - POLITENESS=False
+    command: python3 /project-dir/Search_Engine_Backend/search_engine/crawl_session.py --politeness=False --multithreaded=True --crawl_instruction=180100-180200
     volumes:
       - ~/Search_Engine:/project-dir
 
