@@ -1,3 +1,6 @@
+![Schematic of the Search Engine](Search_Engine_Schematic_1.png)
+
+
 # app/
 
 Source code for a backend, written in Golang. This is far from complete. Eventually the backend is intended to create a gRPC connection to the ```search``` container, which is how it will be used to get search results
