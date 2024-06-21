@@ -208,35 +208,40 @@ def log_crawl_session(se_management_path, crawl_instruction):
 if __name__ == "__main__":
     '''
     
-        This section of the script will be where crawling sessions get initiated from inside their crawling containers. The parameters of the crawl will come from environment variables, which can be set specificially inside of the containers. The nescessary environment variables are: 
+        This section of the script will be where crawling sessions get initiated from inside their crawling containers.
 
-            CRAWL_PLAN_DB_PATH: the path to the database for the crawl plan
-
-            CRAWL_INSTRUCTION: a string of the format: "(crawl start)-(crawl end)" 
-
-            PAGE_INDEX_PATH: the path to the page index where the crawled data is stored
-
-            POLITENESS: whether or not to be polite to the hosts
 
     '''
 
+    import argparse
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("crawl_plan_db_path", help="path to the crawl plan database")
+    parser.add_argument("page_index_path", help="path to the page index")
+    parser.add_argument("politeness", help="whether or not to be polite to the hosts")
+    parser.add_argument("multithreaded", help="crawl on multiple threads")
+    parser.add_argument("crawl_instruction", help="string representation of the subset of the crawl plan database to crawl")
+    args = parser.parse_args()
+
+
     # the path to the crawl plan database
-    crawl_plan_db_path = os.environ['CRAWL_PLAN_DB_PATH']
+    crawl_plan_db_path = args.crawl_plan_db_path
 
     # a string representing what keys to crawl in the crawl session
-    crawl_instruction = os.environ['CRAWL_INSTRUCTION']
+    crawl_instruction = args.crawl_instruction
 
     # path to the page index
-    page_index_path = os.environ['PAGE_INDEX_PATH']
+    page_index_path = args.page_index_path
 
-    politeness_str = os.environ['POLITENESS']
-    if politeness_str == 'True':
-        politeness = True
-    else:
-        politeness = False
+    politeness = args.politeness
+    politeness = False if politeness == 'False' else True
 
-    print(f"INITIALIZING CRAWL SESSION:\n CRAWL_PLAN_DB_PATH: {crawl_plan_db_path}\n CRAWL_INSTRUCTION: {crawl_instruction}\n PAGE_INDEX_PATH: {page_index_path}\n POLITENESS: {politeness}")
+    multithreaded = args.multithreaded
+    multithreaded = False if multithreaded == 'False' else True
 
-    crawl_session = CrawlSession(crawl_plan_db_path, crawl_instruction, page_index_path, politeness=politeness)
+    print(f"INITIALIZING CRAWL SESSION:\n CRAWL_PLAN_DB_PATH: {crawl_plan_db_path}\n CRAWL_INSTRUCTION: {crawl_instruction}\n PAGE_INDEX_PATH: {page_index_path}\n POLITENESS: {politeness}\n MULTITHREADED: {multithreaded}")
+    exit()
+
+    crawl_session = CrawlSession(crawl_plan_db_path, crawl_instruction, page_index_path, politeness=politeness, multithreaded=multithreaded)
 
     crawl_session.crawl()
