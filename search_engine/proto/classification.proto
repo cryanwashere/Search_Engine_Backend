@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+service Classification {
+    rpc ClassifyImage (ImageClassificationRequest) returns (ClassificationResult) {}
+}
+
+message ImageClassificationRequest {
+    bytes image_bytes = 1;
+}
+
+
+
+
+message ClassificationResult {
+    string class_name = 1; 
+    int32 class_id = 2; 
+    string class_metadata = 3; 
+    float confidence = 4; 
+}
+
+message ClassificationResponse {
+    repeated ClassificationResult results = 1;
+}
