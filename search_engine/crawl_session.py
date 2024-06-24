@@ -52,7 +52,7 @@ class CrawlSession:
             self.manager = multiprocessing.Manager()
         
             # queues for saving content that has been retrieved 
-            self.asset_upsert_queue = self.manager.Queue(maxsize=2000)
+            self.asset_upsert_queue = self.manager.Queue(maxsize=5000)
             self.page_data_upsert_queue = self.manager.Queue(maxsize=2000)
 
             # queues for data to be retrieved
@@ -213,7 +213,7 @@ class CrawlSession:
         while True:
             self.log_update()
             
-            time.sleep(1)
+            time.sleep(5)
 
             # if all of the queues are empty, and still empty 5 seconds later, then the process is finished
             if self.check_queues():
@@ -268,7 +268,7 @@ class CrawlSession:
         self.start_time = time.time()
 
         # define how many workers will be doing the retrieval processes
-        page_retrieval_workers = 4
+        page_retrieval_workers = 6
         asset_retrieval_workers = 2
 
         # create the processes that load the page data

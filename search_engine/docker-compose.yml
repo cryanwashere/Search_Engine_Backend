@@ -4,7 +4,10 @@ services:
   crawler:
     image: crawling_container
     container_name: crawler
-    command: python3 /project-dir/Search_Engine_Backend/search_engine/crawl_session.py --politeness=False --multithreaded=True --crawl_instruction=180100-180200
+    command: python3 /project-dir/Search_Engine_Backend/search_engine/crawl_session.py --politeness=False --multithreaded=False --crawl_instruction=0-10000
+    environment:
+      - CRAWL_PLAN_DB_PATH=/project-dir/crawl_plans/wikipedia_v2.sqlite
+      - PAGE_INDEX_PATH=/project-dir/index_v1/page_index_ranked
     volumes:
       - ~/Search_Engine:/project-dir
 

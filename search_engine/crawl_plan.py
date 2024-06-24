@@ -33,6 +33,21 @@ class CrawlPlanDatabaseClient:
             f.close()
             print("process finished")
 
+    def load_wikipedia_page_rank_list(self, page_rank_list_path):
+        with open(page_rank_list_path) as f:
+            for i, line in enumerate(f):
+                line = line.replace("\n","")
+                line = line.replace("\t", " ")
+                split = line.split(" ")
+                split = split[1:]
+                title = "_".join(split)
+                url = url_from_title(title)
+                print(url)
+                self.db[i] = url
+                self.db.commit()
+            f.close()
+            print("finished process")
+
 
 
         
@@ -48,6 +63,6 @@ def url_from_title(title):
 
 if __name__ == "__main__": 
 
-    crawl_plan_client = CrawlPlanDatabaseClient('/home/cameron/Search_Engine/crawl_plans/wikipedia_v1.sqlite')
-    crawl_plan_client.load_wikipedia_titles('/home/cameron/Search_Engine/wikipedia/titles.txt')
+    crawl_plan_client = CrawlPlanDatabaseClient('/home/cameron/Search_Engine/crawl_plans/wikipedia_v2.sqlite')
+    crawl_plan_client.load_wikipedia_page_rank_list('/home/cameron/Search_Engine/wikipedia/wikipedia-top-pageranks.txt')
     crawl_plan_client.finish()
